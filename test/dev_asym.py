@@ -1,3 +1,7 @@
+# %% [markdown]
+# This script basically shows that the PSF does not have to be symmetrical 
+# around the center of the image. 
+
 # %%
 import numpy as np
 import matplotlib.pyplot as plt
@@ -24,6 +28,7 @@ io.imsave(
 # %%
 psf = np.zeros((25,25,25))
 psf[12,12,12] = 1
+psf[18,16,14] = 0.5
 psf = filters.gaussian(psf,sigma=5)
 # %%
 io.imsave(
@@ -62,7 +67,7 @@ pred_obj = pred_obj[pad_img_z0:-pad_img_z1,pad_img_r0:-pad_img_r1,pad_img_c0:-pa
 # %%
 io.imshow(pred_obj[30])
 io.imsave(
-    "data/pred_r_shift_crop_recenter.tiff",
+    "data/pred_asym.tiff",
     util.img_as_float32(pred_obj)
 )
 # %%
