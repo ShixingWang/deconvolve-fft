@@ -17,7 +17,7 @@ rr2,cc2 = draw.ellipse_perimeter(384,128,120,60,orientation=1.0)
 obj[10,rr2,cc2] = 1
 
 io.imsave(
-    "data/obj.tiff",
+    "data/test/obj.tiff",
     util.img_as_ubyte(obj)
 )
 
@@ -26,7 +26,7 @@ psf[12,12,12] = 1
 psf = filters.gaussian(psf,sigma=5)
 
 io.imsave(
-    "data/psf.tiff",
+    "data/test/psf.tiff",
     util.img_as_float32(psf)
 )
 
@@ -34,7 +34,7 @@ io.imshow(psf[12])
 
 img = signal.convolve(obj,psf,method="fft") 
 io.imsave(
-    "data/decoy_conv.tiff",
+    "data/test/decoy_conv.tiff",
     util.img_as_float32(img)
 )
 
@@ -87,7 +87,7 @@ pred_obj = pred_obj[pad_img_z0:-pad_img_z1,pad_img_r0:-pad_img_r1,pad_img_c0:-pa
 # %%
 io.imshow(pred_obj[30])
 io.imsave(
-    "data/pred_r_shift_crop_recenter.tiff",
+    "data/test/pred_r_shift_crop_recenter.tiff",
     util.img_as_float32(pred_obj)
 )
 # %%
