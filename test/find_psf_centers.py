@@ -22,11 +22,11 @@ raw = nd2.imread(filepath)
 # %% 
 N = 200
 for z in range(raw.shape[0]):
-    if not z==15: continue
+    if not z==5: continue
     plt.figure()
     for r in range(0,raw.shape[1],N):
-        # data = raw[z,r]
-        data = (raw[z,r] - raw[z,r].min()) / (raw[z,r].max() - raw[z,r].min())
+        data = raw[z,r]
+        # data = (raw[z,r] - raw[z,r].min()) / (raw[z,r].max() - raw[z,r].min())
         plt.plot(data,label=f"{z=}, {r=}")
         plt.legend()
     plt.show()
@@ -34,8 +34,8 @@ for z in range(raw.shape[0]):
 
     plt.figure()
     for c in range(0,raw.shape[2],N):
-        # data = raw[z,c]
-        data = (raw[z,c] - raw[z,c].min()) / (raw[z,c].max() - raw[z,c].min())
+        data = raw[z,c]
+        # data = (raw[z,c] - raw[z,c].min()) / (raw[z,c].max() - raw[z,c].min())
         plt.plot(data,label=f"{z=}, {c=}")
         plt.legend()
     plt.show()
@@ -49,7 +49,10 @@ for z in range(raw.shape[0]):
 # %%
 cleaned = np.zeros_like(raw,dtype=float)
 for z in range(raw.shape[0]):
-    normed = (raw[z] - raw[z].min()) / (raw[z].max() - raw[z].min())
+    normed = (raw[z] - raw[z].min()) / (raw[z].max() - raw[z].min()) # this normalization is problematic (includes signals)
     bkgd = filters.gaussian(normed,sigma=10) # might need to tune param of reserve_range
     cleaned[z] = normed - bkgd
 
+    # therefore?
+    bkgd = filters.gaussian(normed,sigma=10,preserve_range=True) 
+    cleaned[z] = raw[z] - bkgd
