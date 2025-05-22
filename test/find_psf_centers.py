@@ -7,11 +7,13 @@
 # - `data/2022-11-08_beads_equal_pixel_size`: could not see in the blue channels
 # - `data/2025-05-13_microspheresOnPetriDish`: dots are there, but background is a problem
 
-
 # %%
 import numpy as np
 import matplotlib.pyplot as plt
-import scipy
+from scipy import signal
 from skimage import io,feature
 
-# %% before 
+# %% before finding the PSF centers, 
+# we need to confirm the background is not uniform and fix it.
+
+
