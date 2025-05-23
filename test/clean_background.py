@@ -12,8 +12,7 @@ import nd2
 import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
-from scipy import signal
-from skimage import io,feature,filters,util
+from skimage import io,filters,util
 
 # %% 
 def remove_bkgd(image):
@@ -36,8 +35,8 @@ for filepath in Path("data/raw/2025-05-13_microspheresOnPetriDish").glob("FOV*.n
 
 filepath = "data/raw/2025-05-13_microspheresOnPetriDish/FOV-1_DAPI.nd2"
 raw = nd2.imread(filepath)
-# %% 
 N = 200
+# %% 
 for z in range(raw.shape[0]):
     if not z==24: continue
     plt.figure()
@@ -67,7 +66,7 @@ for z in range(raw.shape[0]):
 
 # %%
 plt.figure()
-plt.title("Intensity along z axis, at different locations on the sensor.")
+# plt.title("Intensity along z axis, at different locations on the sensor.")
 for r in range(0,raw.shape[1],1000):
     for c in range(0,raw.shape[2],1000):
         plt.plot(raw[:,r,c],label=f"{r=}, {c=}")
@@ -101,7 +100,7 @@ io.imsave(
 # %%
 plt.figure()
 for r in range(0,raw.shape[1],N):
-    data = cleaned[0,r]
+    data = cleaned[24,r]
     # data = (raw[z,r] - raw[z,r].min()) / (raw[z,r].max() - raw[z,r].min())
     plt.plot(data,label=f"{r=}")
     plt.legend()
@@ -110,13 +109,22 @@ plt.close()
 
 plt.figure()
 for c in range(0,raw.shape[2],N):
-    data = cleaned[0,:,c]
+    data = cleaned[24,:,c]
     # data = (raw[z,c] - raw[z,c].min()) / (raw[z,c].max() - raw[z,c].min())
     plt.plot(data,label=f"{c=}")
     plt.legend()
 plt.show()
 plt.close()
-# %%
+
+plt.figure()
+# plt.title("Intensity along z axis, at different locations on the sensor.")
+for r in range(0,cleaned.shape[1],1000):
+    for c in range(0,cleaned.shape[2],1000):
+        plt.plot(cleaned[:,r,c],label=f"{r=}, {c=}")
+plt.legend()
+plt.show()
+plt.close()
+
 
 # %% How should we normalize the background-clean image?
 # 1. Between the max and min of the whole image.
