@@ -1,25 +1,45 @@
 # %%
 import numpy as np
-import matplotlib.pyplot as plt
 from pathlib import Path
 from skimage import io,util,filters,feature,draw
 
 # %%
-def find_beads(image,z):
-
+def find_beads(image,z,abs):
+    smoothed = filters.gaussian(image,sigma=1,preserve_range=True)
+    coordinates = feature.peak_local_max(
+        smoothed[z], min_distance=20, threshold_abs=abs
+    )
+    beads = np.zeros_like(smoothed[z], dtype=bool)
+    for coord in coordinates:
+        rr,cc = draw.disk(coord,5)
+        beads[rr,cc] = True
     return beads,coordinates
 
 for filepath in Path("data/clean").glob("*FOV-1*.tiff"):
     img = io.imread(str(filepath))
-    beads,coordinates = find_beads(img,z=12)
+    beads,coordinates = find_beads(img,z=12,abs=1 if "YFP" in filepath.stem else 10)
+    io.imsave(
+        f"data/beads/{filepath.stem.replace('clean','beads')}.tiff",
+        util.img_as_ubyte(beads)
+    )
+    np.savetxt(
+        f"data/coordinates/{filepath.stem.replace('clean_','')}.txt",
+        coordinates,fmt='%d'
+    )
+    print("Processed:", filepath.stem)
 
-
-for filepath in Path("data/clean").glob("*FOV-1*.tiff"):
+for filepath in Path("data/clean").glob("*FOV-2*.tiff"):
     img = io.imread(str(filepath))
-    beads,coordinates = find_beads(img,z=20)
-    
-
-
+    beads,coordinates = find_beads(img,z=20,abs=1 if "YFP" in filepath.stem else 10)
+    io.imsave(
+        f"data/beads/{filepath.stem.replace('clean','beads')}.tiff",
+        util.img_as_ubyte(beads)
+    )
+    np.savetxt(
+        f"data/coordinates/{filepath.stem.replace('clean_','')}.txt",
+        coordinates, fmt='%d'
+    )
+    print("Processed:", filepath.stem)
 
 # %% test on 1 image
 filepath = "data/clean/clean_FOV-1_DAPI.tiff"
