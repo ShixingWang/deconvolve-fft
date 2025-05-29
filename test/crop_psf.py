@@ -13,13 +13,15 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
+from scipy import spatial,ndimage
 from skimage import io,util
 
 # %% Look at the intensity along z direction
 filepath = Path("data/coordinates/FOV-1_DAPI.txt")
-coordinates = np.loadtxt(str(filepath))
-
+coordinates = np.loadtxt(str(filepath)).astype(int)
+# %%
 image = io.imread(f"data/clean/clean_{filepath.stem}.tiff")
+# %%
 for coord in coordinates:
     data = image[:,*[int(c) for c in coord]]
     plt.figure()
@@ -30,4 +32,6 @@ for coord in coordinates:
     # print(f"{coord},\t max at {np.argmax(data)}")
 
 # %%
-voronoi = 
+voronoi = spatial.Voronoi(coordinates)
+# %%
+print()
