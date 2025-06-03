@@ -74,4 +74,8 @@ io.imsave(
     "data/markers-2d_FOV-1_DAPI.tiff",
     util.img_as_ubyte(markers)
 )
-# %%
+# %% [markdown]
+# It is not enough to only find the maxima on 1 z slice. 
+# The next step is to crop a small square neighborhood around the maxima,
+# and find both the argmax and the centroid of the PSF.
+# It is also possible to have to do a thresholding step to remove noise.
