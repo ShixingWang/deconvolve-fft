@@ -23,7 +23,7 @@ for filepath in Path("data/clean").glob("*FOV-1*.tiff"):
         util.img_as_ubyte(beads)
     )
     np.savetxt(
-        f"data/coordinates/{filepath.stem.replace('clean_','')}.txt",
+        f"data/coordinates/{filepath.stem}.txt",
         coordinates,fmt='%d'
     )
     print("Processed:", filepath.stem)
@@ -36,13 +36,13 @@ for filepath in Path("data/clean").glob("*FOV-2*.tiff"):
         util.img_as_ubyte(beads)
     )
     np.savetxt(
-        f"data/coordinates/{filepath.stem.replace('clean_','')}.txt",
+        f"data/coordinates/{filepath.stem}.txt",
         coordinates, fmt='%d'
     )
     print("Processed:", filepath.stem)
 
 # %% test on 1 image
-filepath = "data/clean/clean_FOV-1_DAPI.tiff"
+filepath = "data/clean/FOV-1_DAPI.tiff"
 image = io.imread(str(filepath))
 
 # 
@@ -103,7 +103,7 @@ from skimage import io,util,measure,draw
 filepath = Path("data/coordinates/FOV-1_DAPI.txt")
 coordinates = np.loadtxt(str(filepath)).astype(int)
 # %%
-image = io.imread(f"data/clean/clean_{filepath.stem}.tiff")
+image = io.imread(f"data/clean/{filepath.stem}.tiff")
 # %%
 for coord in coordinates:
     data = image[:,*[int(c) for c in coord]]

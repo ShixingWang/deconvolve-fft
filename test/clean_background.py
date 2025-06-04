@@ -26,7 +26,7 @@ for filepath in Path("data/raw/2025-05-13_microspheresOnPetriDish").glob("FOV*.n
     raw   = nd2.imread(str(filepath))
     clean = remove_bkgd(raw)
     io.imsave(
-        f"data/clean/clean_{filepath.stem}.tiff",
+        f"data/clean/{filepath.stem}.tiff",
         util.img_as_float32(clean)
     )
 # %% [markdown] ## Scratch Zone
