@@ -74,8 +74,8 @@ plt.legend()
 # %% perform deconvolution
 fft_img = fft.rfftn(img)
 
-pad_psf_z1,pad_psf_r1,pad_psf_c1 = (np.array(img.shape) - np.array(psf.shape))//2
-pad_psf_z0,pad_psf_r0,pad_psf_c0 =  np.array(img.shape) - np.array(psf.shape) - np.array((pad_psf_z1,pad_psf_r1,pad_psf_c1))
+pad_psf_z0,pad_psf_r0,pad_psf_c0 = (np.array(img.shape) - np.array(psf.shape))//2
+pad_psf_z1,pad_psf_r1,pad_psf_c1 =  np.array(img.shape) - np.array(psf.shape) - np.array((pad_psf_z0,pad_psf_r0,pad_psf_c0))
 padded_psf = np.pad(psf,((pad_psf_z0,pad_psf_z1),(pad_psf_r0,pad_psf_r1),(pad_psf_c0,pad_psf_c1)))
 
 fft_psf = fft.rfftn(padded_psf)
@@ -92,7 +92,7 @@ pred_obj = pred_obj[pad_img_z0:-pad_img_z1,pad_img_r0:-pad_img_r1,pad_img_c0:-pa
 # %%
 io.imshow(pred_obj[30])
 io.imsave(
-    "data/test/pred_r_shift_crop_recenter.tiff",
+    "data/test/pred_r_shift_crop_recenter_newpadding.tiff",
     util.img_as_float32(pred_obj)
 )
 # %%

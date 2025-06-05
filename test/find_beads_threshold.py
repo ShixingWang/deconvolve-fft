@@ -95,13 +95,15 @@ ranges = {
 }
 
 channel = "DAPI" # to be turned into a loop 
-labels = io.imread(f"data/segmented/FOV-1_{channel}.tiff")
+binary = io.imread(f"data/segmented/FOV-1_{channel}.tiff")
+labels = measure.label(binary)
 intensities = io.imread(f"data/clean/FOV-1_{channel}.tiff")
 
-idx = []
-bbox_z = []
-bbox_r = []
-bbox_c = []
+indices = []
+bboxes_z = []
+bboxes_r = []
+bboxes_c = []
+centereds = {}
 for prop in measure.regionprops(
     label_image=labels,
     intensity_image=intensities
@@ -115,18 +117,77 @@ for prop in measure.regionprops(
     img = img / img.sum()
 
     remeasure = measure.regionprops(
-        label_image=prop.image,
+        label_image=util.img_as_ubyte(prop.image),
         intensity_image=img
     )
     assert len(remeasure)==1, "Regionprops should return exactly one region"
     remeasure = remeasure[0]
-    centroids = [int(np.round(c)) for c in remeasure.centroid_weighted]
-    # pad the image to make sure the PSF is centered
-    # wait, should the PSF be centered at centroid or maximum? 
+    
+    required = tuple(int(np.round(2 * c)) for c in remeasure.centroid_weighted)
+    pad_center_left  = np.array(img.shape) - np.array(required)
+    pad_center_left[pad_center_left<0] = 0
+    pad_center_right = np.array(required) - np.array(img.shape)
+    pad_center_right[pad_center_right<0] = 0
+    centered = np.pad(
+        img,
+        (
+            (pad_center_left[0],pad_center_right[0]),
+            (pad_center_left[1],pad_center_right[1]),
+            (pad_center_left[2],pad_center_right[2]),
+        )
+    )
+    bbox_z,bbox_r,bbox_c = centered.shape
+    bboxes_z.append(bbox_z)
+    bboxes_r.append(bbox_r)
+    bboxes_c.append(bbox_c)
+    indices.append(prop.label)
+    centereds[prop.label] = centered
+    # io.imsave(
+    #     f"data/psf/{filepath.stem}_psf-{prop.label}.tiff",
+    #     util.img_as_float32(img)
+    # )
+
+# %%
+bbox_data = pd.DataFrame({
+    "label": indices,
+    "bbox_z": bboxes_z,
+    "bbox_r": bboxes_r,
+    "bbox_c": bboxes_c,
+})
+max_z = bbox_data['bbox_z'].max()
+max_r = bbox_data['bbox_r'].max()
+max_c = bbox_data['bbox_c'].max()
+psf_average = np.zeros((max_z,max_r,max_c))
+count_psf = 0
+for idx in indices:
+    # pad all psfs to have the same size
+    dims = centereds[idx].shape
+    pad_size_z0 = (max_z - dims[0])//2
+    pad_size_z1 = (max_z - dims[0]) - pad_size_z0
+    pad_size_r0 = (max_z - dims[1])//2
+    pad_size_r1 = (max_z - dims[1]) - pad_size_r0
+    pad_size_c0 = (max_z - dims[2])//2
+    pad_size_c1 = (max_z - dims[2]) - pad_size_c0
+    
+    psf = np.pad(
+        centereds[idx],
+        (
+            (pad_size_z0,pad_size_z1),
+            (pad_size_r0,pad_size_r1),
+            (pad_size_c0,pad_size_c1),
+        )
+    )
     io.imsave(
-        f"data/psf/{filepath.stem}_psf-{prop.label}.tiff",
-        util.img_as_float32(img)
+        f"data/psf/{filepath.stem}_psf-{idx}.tiff",
+        util.img_as_float32(psf)
     )
 
+    psf_average += psf
+    count_psf += 1
+psf_average = psf_average/count_psf
+io.imsave(
+    f"data/psf/average_{filepath.stem}.tiff",
+    util.img_as_float32(psf_average)
+)
 
 # %%
