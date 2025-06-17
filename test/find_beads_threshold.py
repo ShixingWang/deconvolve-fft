@@ -72,7 +72,7 @@ io.imsave(
 
 # %%  This script helps find the size ranges of PSFs in each channel. 
 # ```python
-filepath = Path("data/segmented/FOV-2_FITC.tiff")
+filepath = Path("data/segmented/FOV-2_DAPI.tiff")
 mask = io.imread(str(filepath))
 intensities = io.imread(f"data/clean/{filepath.stem}.tiff")
 label_image = measure.label(mask)
@@ -85,7 +85,7 @@ selected_table = props_table[
     props_table["area"].gt(20)
   & props_table["area"].lt(5000)
 ]
-
+plt.hist(selected_table["area"],bins=32)
 # ```
 
 # %%
@@ -94,7 +94,7 @@ def extract_psf(fov,channel):
     ranges = {
         "DAPI":  (  20, 1000),
         "FITC":  (1000, 5000),
-        "YFP":   (  20,  200),
+        "YFP":   ( 100,  500),
         "TRITC": (1000, 8000),
     }
     # load inputs
@@ -198,7 +198,12 @@ def extract_psf(fov,channel):
     return psfs
 
 # %% 
-for channel in ("DAPI","FITC","YFP","TRITC"):
+for channel in (
+    "DAPI",
+    "FITC",
+    "YFP",
+    "TRITC"
+):
     for v in (1,2):
         psfs = extract_psf(v,channel)
 
