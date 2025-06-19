@@ -53,10 +53,17 @@ def deconvolve(image,psf,epsilon=0.):
     return fft.ifftshift(fft.irfftn(fft_obj))
 
 # %% devonvolve the cleaned images (uniform backgrounds)
-for c in channels:
+for c in ["FITC","TRITC"]:
     for f in FoVs:
         psf = io.imread(f"data/psf/psf-average_FOV-{f}_{c}.tiff")
         beads = io.imread(f"data/clean/FOV-{f}_{c}.tiff")
-    break
+
+        padded_beads,padded_psf = align2images(beads,psf)
+        deconvolved = deconvolve(padded_beads,padded_psf,epsilon=1E-5)
+        io.imsave(
+            f"data/deconvolved/FOV-{f}_{c}_epsilon-1E-5.tiff",
+            util.img_as_float32(np.real_if_close(deconvolved))
+        )
+
 
 # %% devonvolve the raw images (non-uniform backgrounds)
