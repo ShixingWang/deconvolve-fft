@@ -1,9 +1,8 @@
 # deconvolve bead images with the PSFs
 # %%
 import numpy as np
-from pathlib import Path
 from skimage import io,util
-from scipy import signal,fft
+from scipy import fft
 
 # %% 
 channels = ("DAPI","FITC","YFP","TRITC")
@@ -53,17 +52,36 @@ def deconvolve(image,psf,epsilon=0.):
     return fft.ifftshift(fft.irfftn(fft_obj))
 
 # %% devonvolve the cleaned images (uniform backgrounds)
-for c in ["FITC","TRITC"]:
+for c in ["DAPI","YFP"]:
     for f in FoVs:
         psf = io.imread(f"data/psf/psf-average_FOV-{f}_{c}.tiff")
-        beads = io.imread(f"data/clean/FOV-{f}_{c}.tiff")
+        beads = nd2.imread(f"data/clean/FOV-{f}_{c}.tiff")
 
         padded_beads,padded_psf = align2images(beads,psf)
         deconvolved = deconvolve(padded_beads,padded_psf,epsilon=1E-5)
         io.imsave(
-            f"data/deconvolved/FOV-{f}_{c}_epsilon-1E-5.tiff",
+            f"data/deconvolved/FOV-{f}_{c}_clean_epsilon-1E-5.tiff",
+            util.img_as_float32(np.real_if_close(deconvolved))
+        )
+# epsilon ↑: less deconvolved, more like blurry images
+# epsilon ↓: more deconvolved, could give empty images
+# epsilon = 1E-5 is good enough for FITC and TRITC.
+# epsilon = 1E-2 is pretty good for DAPI and YFP.
+
+# %% devonvolve the raw images (non-uniform backgrounds)
+import nd2
+
+for c,ep in zip(channels,[1E-2,1E-5,1E-2,1E-5]):
+    for f in FoVs:
+        psf = io.imread(f"data/psf/psf-average_FOV-{f}_{c}.tiff")
+        beads = nd2.imread(f"data/raw/2025-05-13_microspheresOnPetriDish/FOV-{f}_{c}.nd2")
+
+        padded_beads,padded_psf = align2images(beads,psf)
+        deconvolved = deconvolve(padded_beads,padded_psf,epsilon=ep)
+        io.imsave(
+            f"data/deconvolved/FOV-{f}_{c}_raw_epsilon-{str(ep).replace('.','-')}.tiff",
             util.img_as_float32(np.real_if_close(deconvolved))
         )
 
+# %% looks nice directly on raw images, but we need some quantified metrics.
 
-# %% devonvolve the raw images (non-uniform backgrounds)
