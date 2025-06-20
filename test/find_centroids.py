@@ -19,17 +19,37 @@ for fov in (1,2):
         util.img_as_ubyte(segmented)
     )
 
-# %% [markdown]
-# ```python
-# for fov in (1,2):
-#     bw2d = io.imread(f"data/beads2d/FOV-{fov}.tiff")
-#     label_image = measure.label(bw2d)
-#     prop_table = pd.DataFrame(measure.regionprops_table(
-#         label_image,
-#         properties=("label","area")
-#     ))
-#     plt.hist(prop_table["area"],bins=16)
-# ``` 
-
 # %%
+for fov in (1,2):
+    bw2d = io.imread(f"data/beads2d/FOV-{fov}.tiff")
+    label_image = measure.label(bw2d)
+    # prop_table = pd.DataFrame(measure.regionprops_table(
+    #     label_image,
+    #     properties=("label","area")
+    # ))
+    mask_exclude = np.zeros_like(label_image, dtype=bool)
+    mask_include = np.zeros_like(label_image, dtype=int)
+    for prop in measure.regionprops(label_image):
+        if prop.area > 150:
+            mask_exclude[label_image==prop.label] = True
+            continue
+        mask_include[label_image==prop.label] = prop.label
+    io.imsave(
+        f"data/beads2d/FOV-{fov}_exclude.tiff",
+        util.img_as_ubyte(mask_exclude)
+    )
+    io.imsave(
+        f"data/beads2d/FOV-{fov}_include.tiff",
+        util.img_as_uint(mask_include)
+    )
+
+# %% [markdown]
+# 
+# 2 ways of finding the centroids:
+# 1. Using the     raw image, let the (now positive) min pixel value in each Z to be zero
+# 2. Using the cleaned image, let the (now negative) min pixel value of  all Z to be zero
+# 
+# after finding the centroids, we assign the sum of the masked pixels 
+# to the 8 pixels around the centroid (decimal coordinates), 
+# with weights that reflect the distance from the centroid to the pixel index.
 
