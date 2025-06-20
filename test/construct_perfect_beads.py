@@ -53,3 +53,12 @@ for fov in (1,2):
 # to the 8 pixels around the centroid (decimal coordinates), 
 # with weights that reflect the distance from the centroid to the pixel index.
 
+# %%
+for fov in (1,2):
+    mask2d = io.imread(f"data/beads2d/FOV-{fov}_include.tiff")
+    for c in channels:
+        intensities = io.imread(f"data/clean/FOV-{fov}_{c}.tiff")
+        intensities = intensities - intensities.min()
+        mask3d = np.stack([mask2d for _ in range(intensities.shape[0])], axis=0)
+        for prop in measure.regionprops(label_image=mask3d,intensity_image=intensities):
+            continue

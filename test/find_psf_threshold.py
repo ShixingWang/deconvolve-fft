@@ -211,14 +211,14 @@ for channel in (
         psf_average = np.zeros_like(psfs[list(psfs.keys())[0]])
         for idx in psfs.keys():
             io.imsave(
-                f"data/psf/psf_FOV-{v}_{channel}_idx-{idx}.tiff",
+                f"data/psf_crop/psf_FOV-{v}_{channel}_idx-{idx}.tiff",
                 util.img_as_float32(psfs[idx])
             )
             psf_average += psfs[idx]
             count_psf += 1
         psf_average = psf_average/count_psf
         io.imsave(
-            f"data/psf/psf-average_FOV-{v}_{channel}.tiff",
+            f"data/psf_crop/psf-average_FOV-{v}_{channel}.tiff",
             util.img_as_float32(psf_average)
         )
 

@@ -54,7 +54,7 @@ def deconvolve(image,psf,epsilon=0.):
 # %% devonvolve the cleaned images (uniform backgrounds)
 for c in ["DAPI","YFP"]:
     for f in FoVs:
-        psf = io.imread(f"data/psf/psf-average_FOV-{f}_{c}.tiff")
+        psf = io.imread(f"data/psf_crop/psf-average_FOV-{f}_{c}.tiff")
         beads = nd2.imread(f"data/clean/FOV-{f}_{c}.tiff")
 
         padded_beads,padded_psf = align2images(beads,psf)
@@ -73,7 +73,7 @@ import nd2
 
 for c,ep in zip(channels,[1E-2,1E-5,1E-2,1E-5]):
     for f in FoVs:
-        psf = io.imread(f"data/psf/psf-average_FOV-{f}_{c}.tiff")
+        psf = io.imread(f"data/psf_crop/psf-average_FOV-{f}_{c}.tiff")
         beads = nd2.imread(f"data/raw/2025-05-13_microspheresOnPetriDish/FOV-{f}_{c}.nd2")
 
         padded_beads,padded_psf = align2images(beads,psf)
