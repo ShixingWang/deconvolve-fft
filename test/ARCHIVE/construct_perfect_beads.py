@@ -1,3 +1,8 @@
+# This script is deprecated because this way of deciding PSF is not necessary.
+# Previous method works just fine. And taking single slice img should not be a requirement.
+# The point of constructing perfect beads is that cropping method cannot get away with the black aura around beads.
+# So ideally we should get PSF from the raw image.
+
 # %%
 import nd2
 import numpy as np
