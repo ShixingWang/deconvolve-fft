@@ -8,26 +8,43 @@
 # - `data/2025-05-13_microspheresOnPetriDish`: dots are there, but background is a problem
 
 # %%
+import time
 import nd2
 import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
-from skimage import io,filters,util
+from skimage import io,filters,util,restoration,morphology
 
 # %% 
-def remove_bkgd(image):
-    clean = np.zeros_like(image,dtype=float)
-    for z in range(image.shape[0]):
-        bkgd = filters.gaussian(image[z],sigma=10,preserve_range=True) 
-        clean[z] = image[z] - bkgd
-    return clean
+project_name = "2025-05-13_microspheresOnPetriDish"
 
-for filepath in Path("data/raw/2025-05-13_microspheresOnPetriDish").glob("FOV*.nd2"):
-    raw   = nd2.imread(str(filepath))
-    clean = remove_bkgd(raw)
+def remove_bkgd(image,mask):
+    intensities = image
+    intensities[mask] = 0
+
+
+    bkgd = np.zeros_like(image,dtype=int)
+    clean = np.zeros_like(image,dtype=int)
+    for z in range(image.shape[0]):
+        blurred = filters.gaussian(intensities[z],          sigma=10,preserve_range=True)
+        weights = filters.gaussian((~mask[z]).astype(float),sigma=10,preserve_range=True)
+        with np.errstate(invalid='ignore',divide='ignore'):
+            bkgd[z] = (blurred / weights).astype(int)
+    clean = image - bkgd
+    return clean,bkgd
+
+for filepath in Path(f"data/raw/{project_name}").glob("FOV*.nd2"):
+    raw  = nd2.imread(str(filepath))
+    mask =  io.imread(f"data/segmented/{filepath.stem}.tiff")
+    mask = morphology.binary_dilation(mask>0, morphology.ball(9))
+    clean,bkgd = remove_bkgd(raw,mask)
     io.imsave(
         f"data/clean/{filepath.stem}.tiff",
-        util.img_as_float32(clean)
+        util.img_as_uint(clean)
+    )
+    io.imsave(
+        f"data/bkgd/{filepath.stem}.tiff",
+        util.img_as_uint(bkgd)
     )
 # %% [markdown] ## Scratch Zone
 # %% before finding the PSF centers, 

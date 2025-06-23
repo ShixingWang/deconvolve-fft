@@ -1,12 +1,10 @@
 # Find PSFs by Cleaning Background, Segment Each Bead, Crop Around Each Bead, and Average
 
-Order of scripts:
-1. `clean_background.py`
-2. `find_beads_threshold.py`
-3. `deconvolve_beads.py`
+`proof_of_concept.py` goes before everything, and is actually independent from the workflow.
 
-The rest of the scripts are side ideas that are not used eventually.
+Order of scripts (notice that this is different from v-0.1.0):
+1. `locate_psf.py`
+2. `clean_background.py`
+3. `crop_psf.py`
+4. `deconvolve_beads.py`
 
-This pipeline gets archived because 
-- the segmentation of the beads after cleaning the background looks not as good as the pre-captured single-z image of the beads.
-- cleaning of the background introduces some black compensation around bright beads that should not be there.
