@@ -3,12 +3,25 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from pathlib import Path
-from skimage import io,util,measure
+from skimage import io,util,measure,morphology,filters
 
+# %%
+for filepath in Path("data/clean").glob("FOV-*.tiff"):
+    img = io.imread(str(filepath))
+    binary = np.empty_like(img, dtype=bool)
+    for z in range(img.shape[0]):
+        threshold = filters.threshold_niblack(img[z], window_size=251, k=-1.5)
+        binary[z] = (img[z] > threshold)
+    binary = morphology.binary_opening(binary, morphology.ball(1))
+    labeled = measure.label(binary)
+    io.imsave(
+        f"data/labeled/{filepath.stem}.tiff",
+        util.img_as_uint(labeled)
+    )
 
 # %%  This script helps find the size ranges of PSFs in each channel. 
 # ```python
-filepath = Path("data/located/FOV-2_DAPI.tiff")
+filepath = Path("data/labeled/FOV-1_TRITC.tiff")
 mask = io.imread(str(filepath))
 intensities = io.imread(f"data/clean/{filepath.stem}.tiff")
 label_image = measure.label(mask)
@@ -19,7 +32,7 @@ props_table = pd.DataFrame(measure.regionprops_table(
 ))
 selected_table = props_table[
     props_table["area"].gt(20)
-  & props_table["area"].lt(5000)
+  & props_table["area"].lt(10000)
 ]
 plt.hist(selected_table["area"],bins=32)
 # ```
@@ -28,14 +41,13 @@ plt.hist(selected_table["area"],bins=32)
 def extract_psf(fov,channel):
     # internal parameters
     ranges = {
-        "DAPI":  (  20, 1000),
-        "FITC":  (1000, 5000),
-        "YFP":   ( 100,  500),
-        "TRITC": (1000, 8000),
+        "DAPI":  (  30,  300),
+        "FITC":  (1500, 5000),
+        "YFP":   ( 100,  300),
+        "TRITC": (2000, 5000),
     }
     # load inputs
     binary = io.imread(f"data/located/FOV-{fov}_{channel}.tiff")
-    labels = measure.label(binary)
     intensities = io.imread(f"data/clean/FOV-{fov}_{channel}.tiff")
 
     # calculate the amount to pad to center the PSFs
