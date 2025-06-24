@@ -8,7 +8,7 @@ from skimage import io,util,measure
 
 # %%  This script helps find the size ranges of PSFs in each channel. 
 # ```python
-filepath = Path("data/segmented/FOV-2_DAPI.tiff")
+filepath = Path("data/located/FOV-2_DAPI.tiff")
 mask = io.imread(str(filepath))
 intensities = io.imread(f"data/clean/{filepath.stem}.tiff")
 label_image = measure.label(mask)
@@ -34,7 +34,7 @@ def extract_psf(fov,channel):
         "TRITC": (1000, 8000),
     }
     # load inputs
-    binary = io.imread(f"data/segmented/FOV-{fov}_{channel}.tiff")
+    binary = io.imread(f"data/located/FOV-{fov}_{channel}.tiff")
     labels = measure.label(binary)
     intensities = io.imread(f"data/clean/FOV-{fov}_{channel}.tiff")
 

@@ -8,12 +8,12 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from pathlib import Path
-from skimage import io,util,filters,measure,morphology
+from skimage import io,util,filters,morphology
 
 # %%
 project_name = "2025-05-13_microspheresOnPetriDish"
 
-def threshold_stdv(image,window_size=251,k=-3,opener=morphology.disk(1)):
+def threshold_stdv(image,window_size=251,k=-2,opener=morphology.disk(1)):
     binary = np.zeros_like(image,dtype=bool)
     for z in range(image.shape[0]):
         threshold = filters.threshold_niblack(image[z],window_size=window_size,k=k)
@@ -25,7 +25,7 @@ for filepath in Path(f"data/raw/{project_name}").glob("FOV*.nd2"):
     img = nd2.imread(str(filepath))
     binary = threshold_stdv(img)
     io.imsave(
-        f"data/segmented/{filepath.stem}.tiff",
+        f"data/located/{filepath.stem}.tiff",
         util.img_as_ubyte(binary)
     )
 
@@ -36,7 +36,7 @@ image = io.imread("data/clean/FOV-1_DAPI.tiff")
 threshold = filters.threshold_otsu(image)
 binary = (image > threshold)
 io.imsave(
-    "data/segmented/otsu_FOV-1_DAPI.tiff",
+    "data/located/otsu_FOV-1_DAPI.tiff",
     util.img_as_ubyte(binary)
 )
 
@@ -44,7 +44,7 @@ io.imsave(
 threshold = filters.threshold_li(image)
 binary = (image > threshold)
 io.imsave(
-    "data/segmented/li_FOV-1_DAPI.tiff",
+    "data/located/li_FOV-1_DAPI.tiff",
     util.img_as_ubyte(binary)
 )
 
@@ -52,7 +52,7 @@ io.imsave(
 threshold = filters.threshold_triangle(image)
 binary = (image > threshold)
 io.imsave(
-    "data/segmented/triangle_FOV-1_DAPI.tiff",
+    "data/located/triangle_FOV-1_DAPI.tiff",
     util.img_as_ubyte(binary)
 )
 
@@ -66,7 +66,7 @@ binary = morphology.binary_opening(
 )
 # %% save
 io.imsave(
-    "data/segmented/stdv_FOV-1_DAPI.tiff",
+    "data/located/stdv_FOV-1_DAPI.tiff",
     util.img_as_ubyte(binary)
 )
 

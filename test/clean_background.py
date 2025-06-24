@@ -19,9 +19,8 @@ from skimage import io,filters,util,restoration,morphology
 project_name = "2025-05-13_microspheresOnPetriDish"
 
 def remove_bkgd(image,mask):
-    intensities = image
+    intensities = np.copy(image)
     intensities[mask] = 0
-
 
     bkgd = np.zeros_like(image,dtype=int)
     clean = np.zeros_like(image,dtype=int)
@@ -30,13 +29,20 @@ def remove_bkgd(image,mask):
         weights = filters.gaussian((~mask[z]).astype(float),sigma=10,preserve_range=True)
         with np.errstate(invalid='ignore',divide='ignore'):
             bkgd[z] = (blurred / weights).astype(int)
+            bkgd[z][weights == 0] = 0
     clean = image - bkgd
     return clean,bkgd
 
 for filepath in Path(f"data/raw/{project_name}").glob("FOV*.nd2"):
     raw  = nd2.imread(str(filepath))
-    mask =  io.imread(f"data/segmented/{filepath.stem}.tiff")
-    mask = morphology.binary_dilation(mask>0, morphology.ball(9))
+    mask =  io.imread(f"data/located/{filepath.stem}.tiff").astype(float)/255.0
+    mask = filters.gaussian(mask, sigma=3)
+    mask = (mask > 0.01)
+    io.imsave(
+        f"data/holes/{filepath.stem}.tiff",
+        util.img_as_ubyte(mask)
+    )
+
     clean,bkgd = remove_bkgd(raw,mask)
     io.imsave(
         f"data/clean/{filepath.stem}.tiff",
