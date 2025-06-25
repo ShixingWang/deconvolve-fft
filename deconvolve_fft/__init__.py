@@ -37,14 +37,13 @@ def align2images(img1,img2):
     return aligned1,aligned2
 
 def deconvolve(image,psf,epsilon=0.):
+    # epsilon ↑: less deconvolved, more similar to original images
+    # epsilon ↓: more deconvolved, could give empty images
+    # epsilon = 1E-5 is good enough for FITC and TRITC.
+    # epsilon = 1E-2 is pretty good for DAPI and YFP.
+
     fft_img = fft.rfftn(image)
     fft_psf = fft.rfftn(psf)
 
     fft_obj = fft_img * np.conjugate(fft_psf)/(np.abs(fft_psf)**2+epsilon)
-
     return fft.ifftshift(fft.irfftn(fft_obj))
-# epsilon ↑: less deconvolved, more like blurry images
-# epsilon ↓: more deconvolved, could give empty images
-# epsilon = 1E-5 is good enough for FITC and TRITC.
-# epsilon = 1E-2 is pretty good for DAPI and YFP.
-
