@@ -47,7 +47,7 @@ def extract_psf(fov,channel):
         "TRITC": (2000, 5000),
     }
     # load inputs
-    binary = io.imread(f"data/located/FOV-{fov}_{channel}.tiff")
+    labels = io.imread(f"data/labeled/FOV-{fov}_{channel}.tiff")
     intensities = io.imread(f"data/clean/FOV-{fov}_{channel}.tiff")
 
     # calculate the amount to pad to center the PSFs
@@ -70,8 +70,6 @@ def extract_psf(fov,channel):
             continue
         
         img = prop.image_intensity
-        minimum = img[img>0].min()
-        img[img>0] = img[img>0] - minimum
         img = img / img.sum()
         cropped[prop.label] = img
 
