@@ -1,4 +1,5 @@
 # before this script, I cleaned the large stains in the cleaned images
+# othereise the PSFs look obviously wrong.
 # %%
 import numpy as np
 from pathlib import Path
@@ -73,7 +74,9 @@ for path_clean in Path("data/clean").glob("FOV-*.tiff"):
     cleaned = io.imread(str(path_clean))
     beads   = io.imread(str(path_beads))
     psf = deconvolve(cleaned, beads, epsilon=1E-10)
-    psf = psf[:,]
+    psf = psf[:,997:1047,999:1049]
+    psf[psf<0] = 0
+    psf = psf / psf.sum()
     io.imsave(
         f"data/psf_deconv/psf-deconv_{path_clean.name}",
         util.img_as_float32(psf)
