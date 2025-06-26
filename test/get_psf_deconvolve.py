@@ -73,8 +73,8 @@ for path_clean in Path("data/clean").glob("FOV-*.tiff"):
 
     cleaned = io.imread(str(path_clean))
     beads   = io.imread(str(path_beads))
-    psf = deconvolve(cleaned, beads, epsilon=1E-10)
-    psf = psf[:,997:1047,999:1049]
+    psf = deconvolve(cleaned, beads, epsilon=1E-15)
+    psf = psf[:,972:1072,974:1074]
     psf[psf<0] = 0
     psf = psf / psf.sum()
     io.imsave(

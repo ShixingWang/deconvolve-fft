@@ -1,3 +1,10 @@
 .venv/
 *.tiff
 *.nd2
+
+!data/psf/*.tiff
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[codz]
+*$py.class

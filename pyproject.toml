@@ -1,7 +1,8 @@
 [project]
 name = "deconvolve-fft"
+py_modules = ["deconvolve_fft"]
 version = "0.1.0"
-description = ""
+description = "Deconvolve images using Fourier Transform"
 authors = [
     {name = "Shixing Wang",email = "wangshixing@wustl.edu"}
 ]
