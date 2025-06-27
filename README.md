@@ -35,8 +35,8 @@ The following functions will be available after `import deconvolve_fft`
 
 ### CLI: individual image
 
-- [] Work in progress.
+- [ ] Work in progress.
 
 ### CLI: iterate over a folder
 
-- [] Work in progress.
+- [ ] Work in progress.
