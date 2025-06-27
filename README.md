@@ -43,3 +43,7 @@ The following functions will be available after `import deconvolve_fft`
 ### CLI: iterate over a folder
 
 - [ ] Work in progress.
+
+## LICENSE 
+
+[MIT license](LICENSE).
