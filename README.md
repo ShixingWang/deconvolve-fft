@@ -28,8 +28,8 @@ The following functions will be available after `import deconvolve_fft`
 
 - `center1image(image,centroid)`: Pad an image to place its centroid at the center.
     - `calculate_pad4centroid(shape,centroid)`: Given the shape of the image and its centroid coordinates, calculate the padding widths to place the centroid in the center.
-- `align_images(images)`: 
-    - `calculate_pad2align(shapes)`: Given a list of the shapes of images, calculate the padding widths to 
+- `align_images(images)`: Pad a list of images so that they are of the same shape. 
+    - `calculate_pad2align(shapes)`: Given a list of the shapes of images, calculate the padding widths for each image to be padded into the same size (maximums on each dimension).
 - `deconvolve(image,psf,epsilon)`: Deconvolve the image with the PSF, after padding both to the same size.
     - `epsilon`: the Tikhnov regularization parameter. The higher this value is, the less deconvolved the product image will be.
 
