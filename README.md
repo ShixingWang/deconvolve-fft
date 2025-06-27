@@ -1,6 +1,8 @@
 # DECONVOLVE-FFT
 
-Deconvolve the images with known Point Spread Functions (PSFs), using the Fourier transform method with a Tikhnov regularization.
+Deconvolve diffraction-blurred images with known Point Spread Functions (PSFs), using the Fourier transform method with a Tikhonov regularization.
+
+Here a diffraction-blurred image is modeled as a convolution between the object and the PSF of the imaging system. Given the convolution theorem of the Fourier transformation, we can do the Fast Fourier Transform (FFT) on both the image and the PSF, and then calculate the object by the inverse Fourier transform of the quotient. To avoid divergence of division by zero, a little real number (Tikhonov regularization) parameter is added to the denominator.
 
 ## Installation
 
