@@ -33,6 +33,7 @@ The following functions will be available after `import deconvolve_fft`
 - `align_images(images)`: Pad a list of images so that they are of the same shape. 
     - `calculate_pad2align(shapes)`: Given a list of the shapes of images, calculate the padding widths for each image to be padded into the same size (maximums on each dimension).
 - `deconvolve(image,psf,epsilon)`: Deconvolve the image with the PSF, after padding both to the same size.
+    - `_deconvolve(image,psf,epsilon)`: Core calculation. User is responsible to make sure `image` and `psf` are of the same size.
     - `epsilon`: the Tikhnov regularization parameter. The higher this value is, the less deconvolved the product image will be.
 
 ### CLI: individual image
