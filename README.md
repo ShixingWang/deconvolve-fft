@@ -6,13 +6,23 @@ Here a diffraction-blurred image is modeled as a convolution between the object 
 
 ## Installation
 
-Choose one of the following methods:
+Choose *one* of the following methods you are familiar with:
+
+### conda
+
+```bash
+conda create -n deconv
+conda activate deconv
+pip install --no-deps -r requirements.txt 
+pip install -e .
+```
 
 ### pip + virtualenv(wrapper)
 
 ```bash
-mkvirtualenv -r requirements.txt deconv
+mkvirtualenv deconv
 workon deconv
+pip install --no-deps -r requirements.txt 
 pip install -e .
 ```
 

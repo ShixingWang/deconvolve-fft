@@ -1,12 +1,11 @@
 [project]
 name = "deconvolve-fft"
-py_modules = ["deconvolve_fft"]
 version = "0.1.0"
 description = "Deconvolve images using Fourier Transform"
 authors = [
     {name = "Shixing Wang",email = "wangshixing@wustl.edu"}
 ]
-readme = ""
+readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "jupyter (>=1.1.1,<2.0.0)",
@@ -17,6 +16,9 @@ dependencies = [
     "nd2 (>=0.10.3,<0.11.0)",
     "pandas (>=2.2.3,<3.0.0)",
 ]
+[project.scripts]
+deconv-image  = "deconvolve_fft.cli:deconv1img"
+deconv-folder = "deconvolve_fft.cli:deconv1folder"
 
 
 [build-system]
@@ -25,3 +27,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "deconvolve_fft"
+
+[tool.poetry.requires-plugins]
+poetry-plugin-export = ">=1.8"
+
