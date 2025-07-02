@@ -48,11 +48,34 @@ The following functions will be available after `import deconvolve_fft`
 
 ### CLI: individual image
 
-- [ ] Work in progress.
+```bash
+deconv-image [-h] --psf PSF --input INPUT --output OUTPUT [--epsilon EPSILON]
+```
+
+Options:
+- `-h`, `--help`         show this help message and exit
+- `--psf PSF`          Path to the Point Spread Function (PSF) image.
+- `--input INPUT`      Path to the input image file.
+- `--output OUTPUT`    Path to save the deconvolved image.
+- `--epsilon EPSILON`  Tikhonov regularization parameter to avoid division by zero.
+
 
 ### CLI: iterate over a folder
 
-- [ ] Work in progress.
+```bash
+deconv-folder [-h] --psf PSF --input INPUT [--glob GLOB] [--output OUTPUT] [--prefix PREFIX] [--epsilon EPSILON]
+```
+
+Options:
+- `-h`, `--help`         show this help message and exit
+- `--psf PSF`          Path to the Point Spread Function (PSF) image.
+- `--input INPUT`      Path to the input folder containing images, if --glob is not set, all files in it will be iterated over.
+- `--glob GLOB`        Glob pattern to match the files in the folder to deconvolve. Default is '*.tiff'.
+- `--output OUTPUT`    Path to the output folder. Input folder will be used if not set.
+- `--prefix PREFIX`    Name prepended to the output file names. Default is 'deconv_'.
+- `--epsilon EPSILON`  Tikhonov regularization parameter to avoid division by zero.
+
+
 
 ## LICENSE 
 
