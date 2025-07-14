@@ -3,7 +3,7 @@ import argparse
 import numpy as np
 from pathlib import Path
 from skimage import io,util
-from deconvolve_fft import deconvolve  # Assuming you have a deconvolve_fft function defined in this module
+from deconvolve_fft import deconvolve
 
 def deconv1img():
     parser = argparse.ArgumentParser(description="Deconvolve using Fourier Transform a single image.")
@@ -18,6 +18,7 @@ def deconv1img():
 
     io_input = nd2 if args.input.endswith('.nd2') else io
     img_input = io_input.imread(args.input)
+    img_input = img_input - img_input.min()
 
     deconvolved = deconvolve(img_input, img_psf, epsilon=args.epsilon)
     format_function = util.img_as_uint if np.issubdtype(img_input.dtype, np.integer) else util.img_as_float32
