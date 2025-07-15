@@ -18,32 +18,18 @@ from skimage import io,filters,util,restoration,morphology
 # %% 
 project_name = "2025-05-13_microspheresOnPetriDish"
 
-def remove_bkgd(image,mask):
-    intensities = np.copy(image)
-    intensities[mask] = 0
-
-    bkgd = np.zeros_like(image,dtype=int)
+def remove_bkgd(image):
+    bkgd  = np.zeros_like(image,dtype=int)
     clean = np.zeros_like(image,dtype=int)
     for z in range(image.shape[0]):
-        blurred = filters.gaussian(intensities[z],          sigma=10,preserve_range=True)
-        weights = filters.gaussian((~mask[z]).astype(float),sigma=10,preserve_range=True)
-        with np.errstate(invalid='ignore',divide='ignore'):
-            bkgd[z] = (blurred / weights).astype(int)
-            bkgd[z][weights == 0] = 0
-    clean = image - bkgd
+        bkgd[z]  = filters.gaussian(image[z], sigma=25, preserve_range=True)
+        clean[z] = image[z] - bkgd[z]
     return clean,bkgd
 
 for filepath in Path(f"data/raw/{project_name}").glob("FOV*.nd2"):
     raw  = nd2.imread(str(filepath))
-    mask =  io.imread(f"data/located/{filepath.stem}.tiff").astype(float)/255.0
-    mask = filters.gaussian(mask, sigma=3)
-    mask = (mask > 0.01)
-    io.imsave(
-        f"data/holes/{filepath.stem}.tiff",
-        util.img_as_ubyte(mask)
-    )
 
-    clean,bkgd = remove_bkgd(raw,mask)
+    clean,bkgd = remove_bkgd(raw)
     io.imsave(
         f"data/clean/{filepath.stem}.tiff",
         util.img_as_uint(clean)
