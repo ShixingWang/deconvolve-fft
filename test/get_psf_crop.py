@@ -19,36 +19,25 @@ for filepath in Path("data/clean").glob("FOV-*.tiff"):
         util.img_as_uint(labeled)
     )
 
-# %%  This script helps find the size ranges of PSFs in each channel. 
-# ```python
-filepath = Path("data/labeled/FOV-1_TRITC.tiff")
-mask = io.imread(str(filepath))
-intensities = io.imread(f"data/clean/{filepath.stem}.tiff")
-label_image = measure.label(mask)
-props_table = pd.DataFrame(measure.regionprops_table(
-    label_image=label_image,
-    intensity_image=intensities,
-    properties=('label','area','centroid_weighted','bbox')
-))
-selected_table = props_table[
-    props_table["area"].gt(20)
-  & props_table["area"].lt(10000)
-]
-plt.hist(selected_table["area"],bins=32)
-# ```
 
 # %%
 def extract_psf(fov,channel):
     # internal parameters
-    ranges = {
-        "DAPI":  (  30,  300),
-        "FITC":  (1500, 5000),
-        "YFP":   ( 100,  300),
-        "TRITC": (2000, 5000),
+    exclude = {
+        "1-DAPI":  [ 2,  9, 13,],
+        "1-FITC":  [26, 34, 39, 40, 56, 59, 60, 92, 122, 132],
+        "1-YFP":   [],
+        "1-TRITC": [ 6,  9, 10, 23, 27, ],
+        "2-DAPI":  [],
+        "2-FITC":  [ 3, 11, 13, 14, 23, 75, 101],
+        "2-YFP":   [],
+        "2-TRITC": [ 3, 6, 21, 89],
     }
     # load inputs
     labels = io.imread(f"data/labeled/FOV-{fov}_{channel}.tiff")
     intensities = io.imread(f"data/clean/FOV-{fov}_{channel}.tiff")
+
+    # TODO: clear border
 
     # calculate the amount to pad to center the PSFs
     indices = []
@@ -66,7 +55,7 @@ def extract_psf(fov,channel):
         label_image=labels,
         intensity_image=intensities
     ):
-        if prop.area < ranges[channel][0] or prop.area > ranges[channel][1]:
+        if prop.area < 20 or prop.label in exclude[channel]:
             continue
         
         img = prop.image_intensity
