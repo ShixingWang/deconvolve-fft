@@ -31,7 +31,7 @@ def extract_psf(fov,channel):
         "2-DAPI":  [],
         "2-FITC":  [ 3, 11, 13, 14, 23, 75, 101],
         "2-YFP":   [],
-        "2-TRITC": [ 3, 6, 21, 89],
+        "2-TRITC": [ 3,  6, 21, 89],
     }
     # load inputs
     labels = io.imread(f"data/labeled/FOV-{fov}_{channel}.tiff")
