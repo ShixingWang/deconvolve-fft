@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from pathlib import Path
-from skimage import io,util,measure,morphology,filters
+from skimage import io,util,measure,morphology,filters,segmentation
 
 # %%
 for filepath in Path("data/clean").glob("FOV-*.tiff"):
@@ -35,6 +35,7 @@ def extract_psf(fov,channel):
     }
     # load inputs
     labels = io.imread(f"data/labeled/FOV-{fov}_{channel}.tiff")
+    labels = segmentation.clear_border(labels)
     intensities = io.imread(f"data/clean/FOV-{fov}_{channel}.tiff")
 
     # TODO: clear border
