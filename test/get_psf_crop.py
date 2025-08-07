@@ -1,9 +1,11 @@
 # %%
+import deconvolve_fft
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from pathlib import Path
 from skimage import io,util,measure,morphology,filters,segmentation
+
 
 # %%
 for filepath in Path("data/clean").glob("FOV-*.tiff"):
@@ -24,7 +26,7 @@ for filepath in Path("data/clean").glob("FOV-*.tiff"):
 def extract_psf(fov,channel):
     # internal parameters
     exclude = {
-        "1-DAPI":  [20, 22, 26, 42, 45, 63, 96],
+        "1-DAPI":  [20, 22, 26, 42, 45, 46, 61, 63, 96],
         "1-FITC":  [ 7,  9, 16, 20, 21, 25, 30, 39, 41, 44, 48, 51, 54, 61, 66, 68, 71, 78, 109, 125, 132, 149],
         "1-YFP":   [388, 502, 716],              # need to exclude small dots
         "1-TRITC": [7, 8, 9, 11, 12, 14, 15, 18, 19, 20, 28, 57, 65, 76, 83, 105, 112, 129, 138, 154, 157, 166],
@@ -34,7 +36,7 @@ def extract_psf(fov,channel):
         "2-TRITC": [2, 4, 10, 11, 12, 22, 25, 41, 44, 46, 49, 54, 69, 70, 96, 129, 163, 178, 179, 189, 190],
     }
     # load inputs
-    labels = io.imread(f"data/labeled/FOV-{fov}_{channel}.tiff")
+    labels = io.imread(f"data/masks/FOV-{fov}_{channel}.tiff")
     intensities = io.imread(f"data/clean/FOV-{fov}_{channel}.tiff")
 
     # TODO: clear border
@@ -55,27 +57,17 @@ def extract_psf(fov,channel):
         label_image=labels,
         intensity_image=intensities
     ):
-        if prop.area < 20 or prop.label in exclude[channel]:
+        if prop.area < 60 or prop.label in exclude[f"{fov}-{channel}"]:
             continue
         
         img = prop.image_intensity
-        img = img / img.sum()
-        cropped[prop.label] = img
+        cropped[prop.label] = img / img.sum()
 
-        remeasure = measure.regionprops(
-            label_image=util.img_as_ubyte(prop.image),
-            intensity_image=img
-        )
-        assert len(remeasure)==1, "Regionprops should return exactly one region"
-        remeasure = remeasure[0]
-        required = tuple(int(np.round(2 * c)) for c in remeasure.centroid_weighted)
-
-        pad_center_left  = np.array(img.shape) - np.array(required)
-        pad_center_left[pad_center_left<0] = 0
-        pad_center_z0,pad_center_r0,pad_center_c0 = pad_center_left
-        pad_center_right = np.array(required) - np.array(img.shape)
-        pad_center_right[pad_center_right<0] = 0
-        pad_center_z1,pad_center_r1,pad_center_c1 = pad_center_right
+        [
+            [pad_center_z0,pad_center_z1],
+            [pad_center_r0,pad_center_r1],
+            [pad_center_c0,pad_center_c1],
+        ] = deconvolve_fft.calculate_pad4centroid(img.shape, prop.centroid_weighted_local)
         centered_z0.append(pad_center_z0)
         centered_z1.append(pad_center_z1)
         centered_r0.append(pad_center_r0)
@@ -115,12 +107,11 @@ def extract_psf(fov,channel):
                                             idx,
                                             ['centered_tot_z','centered_tot_r','centered_tot_c']
                                         ]
-        pad_size_z0 = (max_z - dims_z)//2
-        pad_size_z1 = (max_z - dims_z) - pad_size_z0
-        pad_size_r0 = (max_r - dims_r)//2
-        pad_size_r1 = (max_r - dims_r) - pad_size_r0
-        pad_size_c0 = (max_c - dims_c)//2
-        pad_size_c1 = (max_c - dims_c) - pad_size_c0
+        [
+            [pad_size_z0,pad_size_z1],
+            [pad_size_r0,pad_size_r1],
+            [pad_size_c0,pad_size_c1],
+        ] = deconvolve_fft.calculate_pad2align([[dims_z,dims_r,dims_c],[max_z,max_r,max_c]])[0]
 
         psfs[idx] = np.pad(
             cropped[idx],
@@ -153,7 +144,7 @@ for channel in (
             count_psf += 1
         psf_average = psf_average/count_psf
         io.imsave(
-            f"data/psf_crop/psf-average_FOV-{v}_{channel}.tiff",
+            f"data/psf/psf-average_FOV-{v}_{channel}.tiff",
             util.img_as_float32(psf_average)
         )
 

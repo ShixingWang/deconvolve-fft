@@ -6,7 +6,7 @@ import numpy as np
 from pathlib import Path
 from skimage import io,util,measure
 
-for filepath in Path("data/probs/").glob("*.tiff"):
+for filepath in Path("data/probs/").glob("*1_DAPI.tiff"):
     probs = tifffile.imread(str(filepath))
     binary = (probs > 0.1)
     masks = measure.label(binary)

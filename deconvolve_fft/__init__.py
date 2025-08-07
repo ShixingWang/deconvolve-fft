@@ -3,6 +3,10 @@ from skimage import io,util
 from scipy import fft
 
 def calculate_pad4centroid(shape,centroid):
+    """
+    Given the shape of the image and its centroid coordinates, 
+    calculate the padding widths to place the centroid in the center.
+    """
     shape_original = np.array(shape)
     assert len(shape_original)==len(centroid), "Centroid has Different Dimensions from Image."
 
@@ -16,11 +20,16 @@ def calculate_pad4centroid(shape,centroid):
     return pad_window
 
 def center1image(image,centroid):
+    """Pad an image to place its centroid at the center."""
     pad_window = calculate_pad4centroid(image.shape,centroid)
     return np.pad(image, pad_width=pad_window)
 
 
 def calculate_pad2align(shapes):
+    """
+    Given a list of the shapes of images, 
+    calculate the padding widths for each image to be padded into the same size (maximums on each dimension).
+    """
     for shape in shapes[1:]:
         assert len(shape)==len(shapes[0]), "Some Image has Different Dimensions."
     shape_target = np.max(np.array(shapes),axis=0)
@@ -36,7 +45,10 @@ def calculate_pad2align(shapes):
     return pads
 
 def align_images(images):
-    """Hope you do not need this function ever LOL."""
+    """
+    Pad a list of images so that they are of the same shape.
+    Hope you do not need this function ever LOL.
+    """
     pads = calculate_pad2align([img.shape for img in images])
 
     aligned_images = []
@@ -47,10 +59,15 @@ def align_images(images):
 
 
 def _deconvolve(image,psf,epsilon=0.):
-    # epsilon ↑: less deconvolved, more similar to original images
-    # epsilon ↓: more deconvolved, could give empty images
-    # epsilon = 1E-5 is good enough for FITC and TRITC.
-    # epsilon = 1E-2 is pretty good for DAPI and YFP.
+    """
+    Core calculation of deconvolution. 
+    User is responsible to make sure image and psf are of the same size.
+    Parameters:
+    - epsilon ↑: less deconvolved, more similar to original images
+    - epsilon ↓: more deconvolved, could give empty images
+    - epsilon = 1E-5 is good enough for FITC and TRITC.
+    - epsilon = 1E-2 is pretty good for DAPI and YFP.
+    """
 
     fft_img = fft.rfftn(image)
     fft_psf = fft.rfftn(psf)
@@ -59,6 +76,7 @@ def _deconvolve(image,psf,epsilon=0.):
     return fft.ifftshift(fft.irfftn(fft_obj))
 
 def deconvolve(image,psf,epsilon=0.):
+    """Deconvolve the image with the PSF which do not have to be of the same size (will be padded by this function)."""
     pad1,pad2 = calculate_pad2align([image.shape, psf.shape])
     image = np.pad(image, pad_width=pad1)
     psf   = np.pad(psf,   pad_width=pad2)
