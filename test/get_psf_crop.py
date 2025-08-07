@@ -24,18 +24,17 @@ for filepath in Path("data/clean").glob("FOV-*.tiff"):
 def extract_psf(fov,channel):
     # internal parameters
     exclude = {
-        "1-DAPI":  [ 2,  9, 13,],
-        "1-FITC":  [26, 34, 39, 40, 56, 59, 60, 92, 122, 132],
-        "1-YFP":   [],
-        "1-TRITC": [ 6,  9, 10, 23, 27, ],
-        "2-DAPI":  [],
-        "2-FITC":  [ 3, 11, 13, 14, 23, 75, 101],
-        "2-YFP":   [],
-        "2-TRITC": [ 3,  6, 21, 89],
+        "1-DAPI":  [20, 22, 26, 42, 45, 63, 96],
+        "1-FITC":  [ 7,  9, 16, 20, 21, 25, 30, 39, 41, 44, 48, 51, 54, 61, 66, 68, 71, 78, 109, 125, 132, 149],
+        "1-YFP":   [388, 502, 716],              # need to exclude small dots
+        "1-TRITC": [7, 8, 9, 11, 12, 14, 15, 18, 19, 20, 28, 57, 65, 76, 83, 105, 112, 129, 138, 154, 157, 166],
+        "2-DAPI":  [23, 72,],
+        "2-FITC":  [3, 5, 6, 10, 17, 19, 20, 21, 29, 35, 58, 61, 62, 65, 69, 122, 127, 163, 171, 178, 183, 187, 188, 196, 197],
+        "2-YFP":   [173, 194, 196, 198, 332, 359],
+        "2-TRITC": [2, 4, 10, 11, 12, 22, 25, 41, 44, 46, 49, 54, 69, 70, 96, 129, 163, 178, 179, 189, 190],
     }
     # load inputs
     labels = io.imread(f"data/labeled/FOV-{fov}_{channel}.tiff")
-    labels = segmentation.clear_border(labels)
     intensities = io.imread(f"data/clean/FOV-{fov}_{channel}.tiff")
 
     # TODO: clear border
