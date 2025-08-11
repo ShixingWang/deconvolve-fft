@@ -13,7 +13,7 @@ FoVs = (1,2)
 # %% devonvolve the cleaned images (uniform backgrounds)
 for c in channels:
     for f in FoVs:
-        psf = io.imread(f"data/psf_crop/psf-average_FOV-{f}_{c}.tiff")
+        psf = io.imread(f"data/psf/psf-average_FOV-{f}_{c}.tiff")
         beads = io.imread(f"data/clean/FOV-{f}_{c}.tiff")
 
         deconvolved = deconvolve(beads,psf,epsilon=1E-3).astype(int)
@@ -35,12 +35,12 @@ import nd2
 
 for c,ep in zip(channels,[1E-3,1E-6,1E-3,1E-6]):
     for f in FoVs:
-        psf = io.imread(f"data/psf_crop/psf-average_FOV-{f}_{c}.tiff")
+        psf = io.imread(f"data/psf/psf-average_FOV-{f}_{c}.tiff")
         beads = nd2.imread(f"data/raw/2025-05-13_microspheresOnPetriDish/FOV-{f}_{c}.nd2")
 
         deconvolved = deconvolve(beads,psf,epsilon=ep).astype(int)
         if deconvolved.max() > 65535:
-            print(f"Warning: FOV-{f}_{c} deconvolved image has values larger than 65535, clipping to 65535.")
+            print(f"Warning: FOV-{f}_{c} deconvolved image has values larger than 65535, normalizing to 65535.")
             deconvolved = (65535 * deconvolved / deconvolved.max()).astype(int)
         io.imsave(
             f"data/deconvolved/FOV-{f}_{c}_raw_epsilon-{str(ep).replace('.','-')}.tiff",
