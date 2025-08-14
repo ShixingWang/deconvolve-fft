@@ -6,14 +6,14 @@ import numpy as np
 from pathlib import Path
 from skimage import io,util,measure
 
-for filepath in Path("data/probs/").glob("*1_DAPI.tiff"):
+for filepath in Path("data/dev/probs/").glob("*1_DAPI.tiff"):
     probs = tifffile.imread(str(filepath))
     binary = (probs > 0.1)
     masks = measure.label(binary)
 
     formatter = util.img_as_ubyte if masks.max() < 256 else util.img_as_uint
     io.imsave(
-        f"data/masks/{filepath.stem}.tiff",
+        f"data/dev/masks/{filepath.stem}.tiff",
         formatter(masks)
     )
 

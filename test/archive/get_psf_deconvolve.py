@@ -34,8 +34,8 @@ def construct_beads(intensities,labels):
             ))
     return beads
 
-for path_clean in Path("data/clean").glob("FOV-*.tiff"):
-    path_labeled = Path("data/labeled") / path_clean.name
+for path_clean in Path("data/dev/clean").glob("FOV-*.tiff"):
+    path_labeled = Path("data/dev/labeled") / path_clean.name
 
     intensities = io.imread(str(path_clean))
     labels      = io.imread(str(path_labeled))
@@ -49,7 +49,7 @@ for path_clean in Path("data/clean").glob("FOV-*.tiff"):
         beads = (65535 * beads/beads.max()).astype(np.uint16)
         print(f"Warning: {path_clean.name} has values > 65535, rescaling to uint16")
     io.imsave(
-        f"data/psf_deconv/beads_{path_clean.name}",
+        f"data/dev/psf_deconv/beads_{path_clean.name}",
         util.img_as_uint(beads)
     )
 
@@ -68,8 +68,8 @@ def deconvolve(image,psf,epsilon=0.):
     fft_obj = fft_img * np.conjugate(fft_psf)/(np.abs(fft_psf)**2+epsilon)
     return fft.ifftshift(fft.irfftn(fft_obj))
 
-for path_clean in Path("data/clean").glob("FOV-*.tiff"):
-    path_beads = Path("data/psf_deconv") / f"beads_{path_clean.name}"
+for path_clean in Path("data/dev/clean").glob("FOV-*.tiff"):
+    path_beads = Path("data/dev/psf_deconv") / f"beads_{path_clean.name}"
 
     cleaned = io.imread(str(path_clean))
     beads   = io.imread(str(path_beads))
@@ -78,7 +78,7 @@ for path_clean in Path("data/clean").glob("FOV-*.tiff"):
     psf[psf<0] = 0
     psf = psf / psf.sum()
     io.imsave(
-        f"data/psf_deconv/psf-deconv_{path_clean.name}",
+        f"data/dev/psf_deconv/psf-deconv_{path_clean.name}",
         util.img_as_float32(psf)
     )
 

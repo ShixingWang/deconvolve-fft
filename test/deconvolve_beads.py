@@ -14,7 +14,7 @@ FoVs = (1,2)
 for c in ["FITC","TRITC"]:
     for f in FoVs:
         psf = io.imread(f"data/psf/psf-average_FOV-{f}_{c}.tiff")
-        beads = io.imread(f"data/clean/FOV-{f}_{c}.tiff")
+        beads = io.imread(f"data/dev/clean/FOV-{f}_{c}.tiff")
 
         deconvolved = deconvolve(beads,psf,epsilon=1E-8).astype(int)
         if deconvolved.max() > 65535:
@@ -22,7 +22,7 @@ for c in ["FITC","TRITC"]:
             deconvolved = (65535 * deconvolved / deconvolved.max()).astype(int)
 
         io.imsave(
-            f"data/deconvolved/FOV-{f}_{c}_clean_epsilon-1E-8.tiff",
+            f"data/dev/deconvolved/FOV-{f}_{c}_clean_epsilon-1E-8.tiff",
             util.img_as_uint(deconvolved)
         )
 # epsilon ↑: less deconvolved, more like blurry images
@@ -36,14 +36,14 @@ import nd2
 for c,ep in zip(channels,[1E-3,1E-6,1E-3,1E-6]):
     for f in FoVs:
         psf = io.imread(f"data/psf/psf-average_FOV-{f}_{c}.tiff")
-        beads = nd2.imread(f"data/raw/2025-05-13_microspheresOnPetriDish/FOV-{f}_{c}.nd2")
+        beads = nd2.imread(f"data/dev/raw/2025-05-13_microspheresOnPetriDish/FOV-{f}_{c}.nd2")
 
         deconvolved = deconvolve(beads,psf,epsilon=ep).astype(int)
         if deconvolved.max() > 65535:
             print(f"Warning: FOV-{f}_{c} deconvolved image has values larger than 65535, normalizing to 65535.")
             deconvolved = (65535 * deconvolved / deconvolved.max()).astype(int)
         io.imsave(
-            f"data/deconvolved/FOV-{f}_{c}_raw_epsilon-{str(ep).replace('.','-')}.tiff",
+            f"data/dev/deconvolved/FOV-{f}_{c}_raw_epsilon-{str(ep).replace('.','-')}.tiff",
             util.img_as_uint(np.real_if_close(deconvolved))
         )
 

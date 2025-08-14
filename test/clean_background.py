@@ -26,23 +26,23 @@ def remove_bkgd(image):
         clean[z] = image[z] - bkgd[z]
     return clean,bkgd
 
-for filepath in Path(f"data/raw/{project_name}").glob("FOV*.nd2"):
+for filepath in Path(f"data/dev/raw/{project_name}").glob("FOV*.nd2"):
     raw  = nd2.imread(str(filepath))
 
     clean,bkgd = remove_bkgd(raw)
     io.imsave(
-        f"data/clean/{filepath.stem}.tiff",
+        f"data/dev/clean/{filepath.stem}.tiff",
         util.img_as_uint(clean)
     )
     io.imsave(
-        f"data/bkgd/{filepath.stem}.tiff",
+        f"data/dev/bkgd/{filepath.stem}.tiff",
         util.img_as_uint(bkgd)
     )
 # %% [markdown] ## Scratch Zone
 # %% before finding the PSF centers, 
 # we need to confirm the background is not uniform and fix it.
 
-filepath = "data/raw/2025-05-13_microspheresOnPetriDish/FOV-1_DAPI.nd2"
+filepath = "data/dev/raw/2025-05-13_microspheresOnPetriDish/FOV-1_DAPI.nd2"
 raw = nd2.imread(filepath)
 N = 200
 # %% 
@@ -91,7 +91,7 @@ for z in range(raw.shape[0]):
 
 # %%
 io.imsave(
-    f"data/test/{Path(filepath).stem}.tiff",
+    f"data/dev/test/{Path(filepath).stem}.tiff",
     util.img_as_float32(cleaned)
 )
 

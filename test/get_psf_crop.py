@@ -8,7 +8,7 @@ from skimage import io,util,measure,morphology,filters,segmentation
 
 
 # %%
-for filepath in Path("data/clean").glob("FOV-*.tiff"):
+for filepath in Path("data/dev/clean").glob("FOV-*.tiff"):
     img = io.imread(str(filepath))
     binary = np.empty_like(img, dtype=bool)
     for z in range(img.shape[0]):
@@ -17,7 +17,7 @@ for filepath in Path("data/clean").glob("FOV-*.tiff"):
     binary = morphology.binary_opening(binary, morphology.ball(1))
     labeled = measure.label(binary)
     io.imsave(
-        f"data/labeled/{filepath.stem}.tiff",
+        f"data/dev/labeled/{filepath.stem}.tiff",
         util.img_as_uint(labeled)
     )
 
@@ -36,8 +36,8 @@ def extract_psf(fov,channel):
         "2-TRITC": [2, 4, 10, 11, 12, 22, 25, 41, 44, 46, 49, 54, 69, 70, 96, 129, 163, 178, 179, 189, 190],
     }
     # load inputs
-    labels = io.imread(f"data/masks/FOV-{fov}_{channel}.tiff")
-    intensities = io.imread(f"data/clean/FOV-{fov}_{channel}.tiff")
+    labels = io.imread(f"data/dev/masks/FOV-{fov}_{channel}.tiff")
+    intensities = io.imread(f"data/dev/clean/FOV-{fov}_{channel}.tiff")
 
     # TODO: clear border
 
@@ -137,7 +137,7 @@ for channel in (
         psf_average = np.zeros_like(psfs[list(psfs.keys())[0]])
         for idx in psfs.keys():
             io.imsave(
-                f"data/psf_crop/psf_FOV-{v}_{channel}_idx-{idx}.tiff",
+                f"data/dev/psf_crop/psf_FOV-{v}_{channel}_idx-{idx}.tiff",
                 util.img_as_float32(psfs[idx])
             )
             psf_average += psfs[idx]
