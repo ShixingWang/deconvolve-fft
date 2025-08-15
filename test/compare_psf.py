@@ -69,7 +69,7 @@ for c,camera in zip([1,2,3],["DAPI","CFP","FITC"]):
     psf = io.imread(f"data/psf/psf-BornWolf_{camera}.tif")
     for path in Path("data/validate/tiff").glob(f"c-{c}*.tiff"):
         raw = io.imread(str(path))
-        deconvolved = restoration.richardson_lucy(raw, psf, num_iter=50)
+        deconvolved = restoration.richardson_lucy(raw, psf, num_iter=50, clip=False)
         if deconvolved.max() > 65535:
             deconvolved = deconvolved / deconvolved.max() *65535
         deconvolved = deconvolved.astype(np.uint16)
@@ -83,7 +83,7 @@ for c,camera in zip([1,2,3],["DAPI","CFP","FITC"]):
     psf = io.imread(f"data/psf/psf-mask_FOV-1_{camera}.tif")
     for path in Path("data/validate/tiff").glob(f"c-{c}*.tiff"):
         raw = io.imread(str(path))
-        deconvolved = restoration.richardson_lucy(raw, psf, num_iter=50)
+        deconvolved = restoration.richardson_lucy(raw, psf, num_iter=50, clip=False)
         if deconvolved.max() > 65535:
             deconvolved = deconvolved / deconvolved.max() *65535
         deconvolved = deconvolved.astype(np.uint16)
