@@ -38,8 +38,8 @@ def calculate_pad2align(shapes):
     for shape in shapes:
         pad = []
         for shape_i,shapeTi in zip(shape,shape_target):
-            pad_0 = (shapeTi - shape_i)//2
-            pad_1 = (shapeTi - shape_i) - pad_0
+            pad_1 = (shapeTi - shape_i)//2
+            pad_0 = (shapeTi - shape_i) - pad_1
             pad.append([pad_0,pad_1])
         pads.append(pad)
     return pads
@@ -83,6 +83,6 @@ def deconvolve(image,psf,epsilon=0.):
     deconvolved = _deconvolve(image,psf,epsilon)
     deconvolved = deconvolved[tuple([slice(p[0],s-p[1]) for p,s in zip(pad1,image.shape)])]
 
-    mean_old = image.mean()
-    mean_new = deconvolved.mean()
-    return deconvolved - mean_new + mean_old
+    # mean_old = image.mean()
+    # mean_new = deconvolved.mean()
+    return deconvolved # - mean_new + mean_old

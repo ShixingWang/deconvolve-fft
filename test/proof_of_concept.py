@@ -7,21 +7,26 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy import signal,fft
 from skimage import filters,io,draw,util
+from deconvolve_fft import deconvolve
 
 # %% prepdra data
-obj = np.zeros((36,512,512))
+obj = np.zeros((36,512,512),dtype=int)
 
-rr0,cc0 = draw.ellipse(256,256,120,60,rotation=0.5)
-obj[15,rr0,cc0] = 1
+for z in range(5):
+    a = 120 - 5*z
+    b =  72 - 3*z
+    rr0,cc0 = draw.ellipse(256,256,120,72,rotation=0.5)
+    obj[15-z,rr0,cc0] = 128 - z*8
+    obj[15+z,rr0,cc0] = 128 - z*8
 
 rr1,cc1 = draw.ellipse_perimeter(128,384,120,60,orientation=-0.5)
-obj[20,rr1,cc1] = 1
+obj[20,rr1,cc1] = 96
 
 rr2,cc2 = draw.ellipse_perimeter(384,128,120,60,orientation=1.0)
-obj[10,rr2,cc2] = 1
+obj[10,rr2,cc2] = 192
 # %%
 io.imsave(
-    "data/test/obj.tiff",
+    "data/concept/obj.tiff",
     util.img_as_ubyte(obj)
 )
 
@@ -29,24 +34,35 @@ io.imsave(
 psf = np.zeros((25,25,25))
 psf[12,12,12] = 1
 psf[18,16,14] = 0.5
-psf = filters.gaussian(psf,sigma=5)
+psf = filters.gaussian(psf,sigma=1)
+psf = psf/psf.sum()
 # %%
 io.imsave(
-    "data/test/psf.tiff",
+    "data/concept/psf.tiff",
     util.img_as_float32(psf)
 )
 
 # %%
-img = signal.convolve(obj,psf,method="fft") 
+img = signal.convolve(obj,psf,method="fft",mode="same")
+img = img + np.random.poisson(lam=0.05*img.max(), size=img.shape)
+img = img.astype(int) 
 # %%
 io.imsave(
-    "data/test/decoy_conv.tiff",
-    util.img_as_float32(img)
+    "data/concept/img.tiff",
+    util.img_as_ubyte(img)
 )
 
 
+# %% deconvolve
+deconvolved = deconvolve(img, psf, epsilon=0.01).astype(int) # start from 0.1 because of noise/max
+if deconvolved.max() > 255:
+    deconvolved = deconvolved * 255 // deconvolved.max()
+io.imsave(
+    "data/concept/prediction.tiff",
+    util.img_as_ubyte(deconvolved)
+)
 
-# %% perform deconvolution
+# %% scratch zone for deconvolution
 fft_img = fft.rfftn(img)
 
 pad_psf_z1,pad_psf_r1,pad_psf_c1 = (np.array(img.shape) - np.array(psf.shape))//2
@@ -67,7 +83,7 @@ pred_obj = pred_obj[pad_img_z0:-pad_img_z1,pad_img_r0:-pad_img_r1,pad_img_c0:-pa
 # %%
 io.imshow(pred_obj[30])
 io.imsave(
-    "data/test/pred_asym.tiff",
+    "data/concept/pred_asym.tiff",
     util.img_as_float32(pred_obj)
 )
 # %%
