@@ -67,16 +67,18 @@ for path in Path("data/validate/tiff").glob("c-3*.tiff"):
 # %% richardson-lucy with theoretical PSF
 for c,camera in zip([1,2,3],["DAPI","CFP","FITC"]):
     psf = io.imread(f"data/psf/psf-BornWolf_{camera}.tif")
+    psf = psf / psf.sum()
     for path in Path("data/validate/tiff").glob(f"c-{c}*.tiff"):
         raw = io.imread(str(path))
-        deconvolved = restoration.richardson_lucy(raw, psf, num_iter=50, clip=False)
+        deconvolved = restoration.richardson_lucy(raw, psf, num_iter=30, clip=False)
         if deconvolved.max() > 65535:
             deconvolved = deconvolved / deconvolved.max() *65535
         deconvolved = deconvolved.astype(np.uint16)
         io.imsave(
-            f"data/validate/rl_theoretical/{path.stem}_n-50.tiff",
+            f"data/validate/rl_theoretical/{path.stem}_n-30.tiff",
             util.img_as_uint(deconvolved)
         )
+        # nearly 4 min for n=30, around 7 min for n=50
 
 # %% richardson-lucy with captured PSF
 for c,camera in zip([1,2,3],["DAPI","CFP","FITC"]):
