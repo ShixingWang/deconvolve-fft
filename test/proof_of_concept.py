@@ -54,13 +54,17 @@ io.imsave(
 
 
 # %% deconvolve
-deconvolved = deconvolve(img, psf, epsilon=0.01).astype(int) # start from 0.1 because of noise/max
-if deconvolved.max() > 255:
-    deconvolved = deconvolved * 255 // deconvolved.max()
-io.imsave(
-    "data/concept/prediction.tiff",
-    util.img_as_ubyte(deconvolved)
-)
+for k in [10,1000,10000,1000000]:
+    deconvolved = deconvolve(img, psf, epsilon=1/k).astype(int) # start from 0.1 because of noise/max
+    if deconvolved.max() > 255:
+        deconvolved = deconvolved * 255 // deconvolved.max()
+    io.imsave(
+        f"data/concept/prediction_1-{k}.tiff",
+        util.img_as_ubyte(deconvolved)
+    )
+# When noise exists, there is a sweet spot for the choice of epsilon.
+# if epsilon is too small, the noise will be amplified.
+# if epsilon is too large, the deconvolution will not be applied to the image.
 
 # %% scratch zone for deconvolution
 fft_img = fft.rfftn(img)
