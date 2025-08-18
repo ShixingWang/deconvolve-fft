@@ -1,8 +1,10 @@
 .venv/
+*.tif
 *.tiff
 *.nd2
 
 !data/psf/*.tiff
+!data/dev/psf_crop/*.tif
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
