@@ -81,7 +81,7 @@ def deconvolve(image,psf,epsilon=0.):
     image = np.pad(image, pad_width=pad1)
     psf   = np.pad(psf,   pad_width=pad2)
     deconvolved = _deconvolve(image,psf,epsilon)
-    deconvolved = deconvolved[tuple([slice(p[0],s-p[1]) for p,s in zip(pad1,image.shape)])]
+    deconvolved = deconvolved[tuple([slice(p[0],p[0]+s) for p,s in zip(pad1,image.shape)])]
 
     # mean_old = image.mean()
     # mean_new = deconvolved.mean()

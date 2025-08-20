@@ -6,10 +6,35 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import signal,fft
-from skimage import filters,io,draw,util
+from skimage import filters,io,draw,util,metrics
 from deconvolve_fft import deconvolve
 
-# %% prepdra data
+# %% VERIFY: the fftshift function according to ChatGPT
+#    RESULT: ChatGPT is talking about something else.
+obj = np.zeros((64,64))
+obj[32,32] = 1
+
+# PSF: small Gaussian, centered in array
+x = np.arange(-8,8)
+X,Y = np.meshgrid(x,x)
+psf = np.exp(-(X**2+Y**2)/10)
+
+blur1 = signal.convolve(obj,psf,method="fft",mode="same")
+
+# Case 2: shifted psf
+psf_shift = np.fft.fftshift(psf)
+blur2 = signal.convolve(obj, psf_shift, method="fft", mode="same")
+
+print("argmax of obj:", np.unravel_index(np.argmax(obj), obj.shape))
+print("argmax of blur1 (psf centered):", np.unravel_index(np.argmax(blur1), blur1.shape))
+print("argmax of blur2 (psf shifted):", np.unravel_index(np.argmax(blur2), blur2.shape))
+
+plt.subplot(131); plt.imshow(obj); plt.title("Ground Truth")
+plt.subplot(132); plt.imshow(blur1); plt.title("No shift (off-centered)")
+plt.subplot(133); plt.imshow(blur2); plt.title("With fftshift (centered)")
+plt.show()
+
+# %% prepare data
 obj = np.zeros((36,512,512),dtype=int)
 
 for z in range(5):
@@ -44,7 +69,7 @@ io.imsave(
 
 # %%
 img = signal.convolve(obj,psf,method="fft",mode="same")
-img = img + np.random.poisson(lam=0.05*img.max(), size=img.shape)
+# img = img + np.random.poisson(lam=0.05*img.max(), size=img.shape)
 img = img.astype(int) 
 # %%
 io.imsave(
@@ -53,18 +78,35 @@ io.imsave(
 )
 
 
-# %% deconvolve
+# %% deconvolve (TODO: might need very small gaussian smoothing)
 for k in [10,1000,10000,1000000]:
     deconvolved = deconvolve(img, psf, epsilon=1/k).astype(int) # start from 0.1 because of noise/max
     if deconvolved.max() > 255:
         deconvolved = deconvolved * 255 // deconvolved.max()
-    io.imsave(
-        f"data/concept/prediction_1-{k}.tiff",
-        util.img_as_ubyte(deconvolved)
-    )
+    # io.imsave(
+    #     f"data/concept/prediction_1-{k}.tiff",
+    #     util.img_as_ubyte(deconvolved)
+    # )
 # When noise exists, there is a sweet spot for the choice of epsilon.
 # if epsilon is too small, the noise will be amplified.
 # if epsilon is too large, the deconvolution will not be applied to the image.
+# Probelm: quantified metrics shows a different sweet spot than visual inspection.
+
+# %% proof of concept: quality control
+truth = io.imread("data/concept/obj.tiff")
+rmse = []
+psnr = []
+ssim = []
+for k in [10,100,1000,10000,1000000]:
+    predict = io.imread(f"data/concept/prediction_1-{k}.tiff")
+    rmse.append(metrics.mean_squared_error(truth, predict))
+    psnr.append(metrics.peak_signal_noise_ratio(truth, predict))
+    ssim.append(metrics.structural_similarity(truth, predict))
+img = io.imread("data/concept/img.tiff")
+print("RMSE:",metrics.mean_squared_error(truth, img))
+print("PSNR:",metrics.peak_signal_noise_ratio(truth, img))
+print("SSIM:",metrics.structural_similarity(truth, img))
+
 
 # %% scratch zone for deconvolution
 fft_img = fft.rfftn(img)
