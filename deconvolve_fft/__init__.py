@@ -68,12 +68,14 @@ def _deconvolve(image,psf,epsilon=0.):
     - epsilon = 1E-5 is good enough for FITC and TRITC.
     - epsilon = 1E-2 is pretty good for DAPI and YFP.
     """
-
     fft_img = fft.rfftn(image)
-    fft_psf = fft.rfftn(psf)
 
-    fft_obj = fft_img * np.conjugate(fft_psf)/(np.abs(fft_psf)**2+epsilon)
-    return fft.ifftshift(fft.irfftn(fft_obj))
+    shift_psf = fft.fftshift(psf)
+    fft_psf = fft.rfftn(shift_psf)
+    conj_psf = np.conjugate(fft_psf)
+
+    fft_obj = fft_img * conj_psf/(fft_psf * conj_psf + epsilon)
+    return fft.irfftn(fft_obj)
 
 def deconvolve(image,psf,epsilon=0.):
     """Deconvolve the image with the PSF which do not have to be of the same size (will be padded by this function)."""

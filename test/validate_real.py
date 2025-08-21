@@ -12,7 +12,7 @@ names = [
     "zStack_PX-VO_FOV-0_camera-blues.nd2",
     "zStack_PX-VO-ER_FOV-8_camera-bluegreen.nd2",
 ]
-
+# %%
 for name in names:
     path = Path(f"../organelle-recognize/images/2025-02-23_Mixed1ColorDiploids/raw/{name}")
     img = nd2.imread(str(path))
@@ -70,26 +70,34 @@ for c,camera in zip([1,2,3],["DAPI","CFP","FITC"]):
     psf = psf / psf.sum()
     for path in Path("data/validate/tiff").glob(f"c-{c}*.tiff"):
         raw = io.imread(str(path))
-        deconvolved = restoration.richardson_lucy(raw, psf, num_iter=30, clip=False)
-        if deconvolved.max() > 65535:
-            deconvolved = deconvolved / deconvolved.max() *65535
-        deconvolved = deconvolved.astype(np.uint16)
-        io.imsave(
-            f"data/validate/rl_theoretical/{path.stem}_n-30.tiff",
-            util.img_as_uint(deconvolved)
-        )
+        bkgd = np.empty_like(raw, dtype=int)
+        for z in range(raw.shape[0]):
+            bkgd[z] = filters.gaussian(raw[z], sigma=25, preserve_range=True)
+        img = raw - bkgd
+        for n in range(1,51,10):
+            deconvolved = restoration.richardson_lucy(img, psf, num_iter=n, clip=False)
+            deconvolved[deconvolved > 65535] = 65535
+            deconvolved = deconvolved.astype(np.uint16)
+            io.imsave(
+                f"data/validate/rl/clean_{path.stem}_n-{n}.tiff",
+                util.img_as_uint(deconvolved)
+            )
         # nearly 4 min for n=30, around 7 min for n=50
 
 # %% richardson-lucy with captured PSF
 for c,camera in zip([1,2,3],["DAPI","CFP","FITC"]):
-    psf = io.imread(f"data/psf/psf-mask_FOV-1_{camera}.tif")
+    psf = io.imread(f"data/psf/psf-max_FOV-1_{camera}.tif")
     for path in Path("data/validate/tiff").glob(f"c-{c}*.tiff"):
         raw = io.imread(str(path))
-        deconvolved = restoration.richardson_lucy(raw, psf, num_iter=50, clip=False)
-        if deconvolved.max() > 65535:
-            deconvolved = deconvolved / deconvolved.max() *65535
-        deconvolved = deconvolved.astype(np.uint16)
-        io.imsave(
-            f"data/validate/rl_theoretical/{path.stem}_n-50.tiff",
-            util.img_as_uint(deconvolved)
-        )
+        bkgd = np.empty_like(raw, dtype=int)
+        for z in range(raw.shape[0]):
+            bkgd[z] = filters.gaussian(raw[z], sigma=25, preserve_range=True)
+        img = raw - bkgd
+        for n in range(1,51,10):
+            deconvolved = restoration.richardson_lucy(raw, psf, num_iter=n, clip=False)
+            deconvolved[deconvolved > 65535] = 65535
+            deconvolved = deconvolved.astype(np.uint16)
+            io.imsave(
+                f"data/validate/rl_theoretical/{path.stem}_n-{n}.tiff",
+                util.img_as_uint(deconvolved)
+            )

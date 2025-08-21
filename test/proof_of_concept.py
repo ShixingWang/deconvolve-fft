@@ -7,7 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy import signal,fft
 from skimage import filters,io,draw,util,metrics
-from deconvolve_fft import deconvolve
+from deconvolve_fft import deconvolve,calculate_pad2align
 
 # %% VERIFY: the fftshift function according to ChatGPT
 #    RESULT: ChatGPT is talking about something else.
@@ -19,6 +19,7 @@ x = np.arange(-8,8)
 X,Y = np.meshgrid(x,x)
 psf = np.exp(-(X**2+Y**2)/10)
 
+# Case 1: original psf
 blur1 = signal.convolve(obj,psf,method="fft",mode="same")
 
 # Case 2: shifted psf
@@ -69,7 +70,7 @@ io.imsave(
 
 # %%
 img = signal.convolve(obj,psf,method="fft",mode="same")
-# img = img + np.random.poisson(lam=0.05*img.max(), size=img.shape)
+img = img + np.random.poisson(lam=0.05*img.max(), size=img.shape)
 img = img.astype(int) 
 # %%
 io.imsave(
@@ -78,58 +79,71 @@ io.imsave(
 )
 
 
+# %% 
+def _new_deconvolve(image, psf, epsilon=0.):
+    fft_img = fft.rfftn(image)
+
+    shift_psf = fft.fftshift(psf)
+    fft_psf = fft.rfftn(shift_psf)
+    conj_fft = np.conjugate(fft_psf)
+
+    fft_obj = fft_img * conj_fft/(fft_psf * conj_fft + epsilon)
+    return fft.irfftn(fft_obj)
+
+def new_deconvolve(image,psf,epsilon=0.):
+    """Deconvolve the image with the PSF which do not have to be of the same size (will be padded by this function)."""
+    pad1,pad2 = calculate_pad2align([image.shape, psf.shape])
+    image = np.pad(image, pad_width=pad1)
+    psf   = np.pad(psf,   pad_width=pad2)
+    deconvolved = _new_deconvolve(image,psf,epsilon)
+    deconvolved = deconvolved[tuple([slice(p[0],p[0]+s) for p,s in zip(pad1,image.shape)])]
+
+    # mean_old = image.mean()
+    # mean_new = deconvolved.mean()
+    return deconvolved # - mean_new + mean_old
+
+deconv0 = deconvolve(img,psf,epsilon=1/10)
+deconv1 = new_deconvolve(img,psf,epsilon=1/10)
+print("2 Deconvolution Methods are equal:", np.allclose(deconv0,deconv1))
+
 # %% deconvolve (TODO: might need very small gaussian smoothing)
-for k in [10,1000,10000,1000000]:
-    deconvolved = deconvolve(img, psf, epsilon=1/k).astype(int) # start from 0.1 because of noise/max
-    if deconvolved.max() > 255:
-        deconvolved = deconvolved * 255 // deconvolved.max()
-    # io.imsave(
-    #     f"data/concept/prediction_1-{k}.tiff",
-    #     util.img_as_ubyte(deconvolved)
-    # )
+
+mean_obj = obj.mean()
+mean_img = img.mean()
+target = obj.astype(np.ubyte)
+
+params = [10,100,1000,10000,1000000]
+rmse = []
+psnr = []
+ssim = []
+for k in params:
+    deconvolved = deconvolve(img, psf, epsilon=1/k)
+    deconvolved = filters.gaussian(deconvolved, sigma=0.5, preserve_range=True)
+    mean_deconv = deconvolved[deconvolved>0].mean()
+    predict = (deconvolved - mean_deconv + mean_img)
+    predict[predict < 0] = 0
+    predict = predict.astype(np.ubyte)
+    rmse.append(metrics.mean_squared_error(target, predict))
+    psnr.append(metrics.peak_signal_noise_ratio(target, predict))
+    ssim.append(metrics.structural_similarity(target, predict))
+    io.imsave(
+        f"data/concept/prediction_1-{k}.tiff",
+        util.img_as_ubyte(predict)
+    )
+benchmark = (img)
+benchmark[benchmark < 0] = 0
+benchmark = benchmark.astype(np.ubyte)
+print("RMSE:",metrics.mean_squared_error(target, benchmark),rmse)
+print("PSNR:",metrics.peak_signal_noise_ratio(target, benchmark),psnr)
+print("SSIM:",metrics.structural_similarity(target, benchmark),ssim)
+
 # When noise exists, there is a sweet spot for the choice of epsilon.
 # if epsilon is too small, the noise will be amplified.
 # if epsilon is too large, the deconvolution will not be applied to the image.
 # Probelm: quantified metrics shows a different sweet spot than visual inspection.
-
-# %% proof of concept: quality control
-truth = io.imread("data/concept/obj.tiff")
-rmse = []
-psnr = []
-ssim = []
-for k in [10,100,1000,10000,1000000]:
-    predict = io.imread(f"data/concept/prediction_1-{k}.tiff")
-    rmse.append(metrics.mean_squared_error(truth, predict))
-    psnr.append(metrics.peak_signal_noise_ratio(truth, predict))
-    ssim.append(metrics.structural_similarity(truth, predict))
-img = io.imread("data/concept/img.tiff")
-print("RMSE:",metrics.mean_squared_error(truth, img))
-print("PSNR:",metrics.peak_signal_noise_ratio(truth, img))
-print("SSIM:",metrics.structural_similarity(truth, img))
+# It turns out 
+# - necessary to compensate the mean of the deconvolved images
+# - not yet clear how helpful (if at all) the gaussian smoothing is.
 
 
-# %% scratch zone for deconvolution
-fft_img = fft.rfftn(img)
-
-pad_psf_z1,pad_psf_r1,pad_psf_c1 = (np.array(img.shape) - np.array(psf.shape))//2
-pad_psf_z0,pad_psf_r0,pad_psf_c0 =  np.array(img.shape) - np.array(psf.shape) - np.array((pad_psf_z1,pad_psf_r1,pad_psf_c1))
-padded_psf = np.pad(psf,((pad_psf_z0,pad_psf_z1),(pad_psf_r0,pad_psf_r1),(pad_psf_c0,pad_psf_c1)))
-
-fft_psf = fft.rfftn(padded_psf)
-
-alpha = 0.0
-fft_obj = fft_img * np.conjugate(fft_psf)/(np.abs(fft_psf)**2+alpha)
-
-# %% check result
-pred_obj = fft.ifftshift(fft.irfftn(fft_obj))
-pad_img_z0,pad_img_r0,pad_img_c0 = (np.array(img.shape) - np.array(obj.shape))//2
-pad_img_z1,pad_img_r1,pad_img_c1 =  np.array(img.shape) - np.array(obj.shape) - np.array((pad_img_z0,pad_img_r0,pad_img_c0))
-pred_obj = pred_obj[pad_img_z0:-pad_img_z1,pad_img_r0:-pad_img_r1,pad_img_c0:-pad_img_c1]
-
-# %%
-io.imshow(pred_obj[30])
-io.imsave(
-    "data/concept/pred_asym.tiff",
-    util.img_as_float32(pred_obj)
-)
 # %%

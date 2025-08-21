@@ -11,20 +11,22 @@ channels = ("DAPI","FITC","YFP","TRITC")
 FoVs = (1,2)
 
 # %% devonvolve the cleaned images (uniform backgrounds)
-for c in ["FITC","TRITC"]:
+for c in channels:
     for f in FoVs:
-        psf = io.imread(f"data/psf/psf-average_FOV-{f}_{c}.tiff")
+        psf = io.imread(f"data/psf/psf-max_FOV-{f}_{c}.tiff")
         beads = io.imread(f"data/dev/clean/FOV-{f}_{c}.tiff")
-
-        deconvolved = deconvolve(beads,psf,epsilon=1E-8).astype(int)
-        if deconvolved.max() > 65535:
-            print(f"Warning: FOV-{f}_{c} deconvolved image has values larger than 65535, clipping to 65535.")
-            deconvolved = (65535 * deconvolved / deconvolved.max()).astype(int)
-
-        io.imsave(
-            f"data/dev/deconvolved/FOV-{f}_{c}_clean_epsilon-1E-8.tiff",
-            util.img_as_uint(deconvolved)
-        )
+        mean_beads = beads.mean()
+        for k in range(1,9):
+            deconvolved = deconvolve(beads,psf,epsilon=1/10**k)
+            mean_deconv = deconvolved[deconvolved>0].mean()
+            deconvolved = deconvolved - mean_deconv + mean_beads
+            deconvolved[deconvolved < 0] = 0
+            deconvolved[deconvolved > 65535] = 65535
+            deconvolved = deconvolved.astype(np.uint16)
+            io.imsave(
+                f"data/dev/deconvolved/FOV-{f}_{c}_clean_epsilon-1E{k}.tiff",
+                util.img_as_uint(deconvolved)
+            )
 # epsilon ↑: less deconvolved, more like blurry images
 # epsilon ↓: more deconvolved, could give empty images
 # epsilon = 1E-6 is good enough for FITC and TRITC.
