@@ -80,9 +80,9 @@ def _deconvolve(image,psf,epsilon=0.):
 def deconvolve(image,psf,epsilon=0.):
     """Deconvolve the image with the PSF which do not have to be of the same size (will be padded by this function)."""
     pad1,pad2 = calculate_pad2align([image.shape, psf.shape])
-    image = np.pad(image, pad_width=pad1)
-    psf   = np.pad(psf,   pad_width=pad2)
-    deconvolved = _deconvolve(image,psf,epsilon)
+    _image = np.pad(image, pad_width=pad1)
+    _psf   = np.pad(psf,   pad_width=pad2)
+    deconvolved = _deconvolve(_image,_psf,epsilon)
     deconvolved = deconvolved[tuple([slice(p[0],p[0]+s) for p,s in zip(pad1,image.shape)])]
 
     # mean_old = image.mean()
