@@ -7,12 +7,13 @@ from pathlib import Path
 from skimage import io,util,filters,restoration
 from deconvolve_fft import deconvolve
 
-# %%
+# %% files to test
 names = [
     # "zStack_PX-VO_FOV-0_camera-blues",
     "zStack_PX-VO-ER_FOV-8_camera-bluegreen",
 ]
-# %%
+
+# %% save each channel as z-stack tiff image
 for name in names:
     path = Path(f"../organelle-recognize/images/2025-02-23_Mixed1ColorDiploids/raw/{name}.nd2")
     img = nd2.imread(str(path))
@@ -22,7 +23,7 @@ for name in names:
             f"data/validate/tiff/c-{c}_{path.stem}.tiff",
             util.img_as_uint(img[:,c,...])
         )
-# %%
+# %% save the background as blurred images with different gaussian sigmas
 for path in Path("data/validate/tiff").glob("c-2*.tiff"):
     raw = io.imread(str(path))
     for sigma in [10,25,50,100]:
@@ -34,6 +35,8 @@ for path in Path("data/validate/tiff").glob("c-2*.tiff"):
             util.img_as_uint(img)
         )
 # seems like sigma=25 is a good choice
+# [2025-08-25] now I wonder how good this observation is without seeing the subtracted images.
+#              but anyway sigma=25 is the choice when extracting PSFs above.
 
 # %% with ~~or without~~ background subtraction
 psf = io.imread("data/psf/psf-max_FOV-1_FITC.tiff")
@@ -47,22 +50,28 @@ for name in names:
     for z in range(raw.shape[0]):
         bkgd[z] = filters.gaussian(raw[z], sigma=25, preserve_range=True)
     img = raw - bkgd
-    img[img<0] = 0  # does this make a difference?
+    # img[img<0] = 0  # does this make a difference?
     mean_img = img.mean()
 
     for m in range(1,12):
         deconv_img = deconvolve(img, psf, epsilon=1/10**m)
         # deconv_img = filters.gaussian(deconv_img, sigma=0.5, preserve_range=True)
-        mean_deconv = deconv_img[deconv_img>0].mean()
+        mean_deconv = deconv_img.mean()
         deconv_img = deconv_img - mean_deconv + mean_img
-        deconv_img[deconv_img < 0] = 0
-        deconv_img[deconv_img > 65535] = 65535
-        deconv_img = deconv_img.astype(np.uint16)
+        # deconv_img[deconv_img < 0] = 0
+        # deconv_img[deconv_img > 65535] = 65535
+        deconv_img = deconv_img.astype(float)
         io.imsave(
-            f"data/validate/fft/nogaus-max_{path.stem}_epsilon-1E-{m}.tiff",
-            util.img_as_uint(deconv_img)
+            f"data/validate/fft/float_{path.stem}_epsilon-1E-{m}.tiff",
+            util.img_as_float32(deconv_img)
         )
         # epsilon = 1E-3 gives nice results on CFP with FITC PSF
+
+
+# %% [markdown] 
+# ## Richardson-Lucy 
+# 
+# This method results in uneven background across z-slices, even with background subtraction.
 
 # %% richardson-lucy with theoretical PSF
 for c,camera in zip([1,2,3],["DAPI","CFP","FITC"]):
