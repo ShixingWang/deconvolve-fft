@@ -39,7 +39,8 @@ for path in Path("data/validate/tiff").glob("c-2*.tiff"):
 #              but anyway sigma=25 is the choice when extracting PSFs above.
 
 # %% with ~~or without~~ background subtraction
-psf = io.imread("data/psf/psf-max_FOV-1_FITC.tiff")
+psf = io.imread("data/psf/from_raw/psf-raw_FOV-2_FITC.tiff")
+psf = psf / psf.sum()
 # psf = io.imread("data/psf/psf-BornWolf_CFP.tif")
 # for path in Path("data/validate/tiff").glob("c-3*.tiff"):
 for name in names:
@@ -62,7 +63,7 @@ for name in names:
         # deconv_img[deconv_img > 65535] = 65535
         deconv_img = deconv_img.astype(float)
         io.imsave(
-            f"data/validate/fft/float_{path.stem}_epsilon-1E-{m}.tiff",
+            f"data/validate/fft/raw_{path.stem}_epsilon-1E-{m}.tiff",
             util.img_as_float32(deconv_img)
         )
         # epsilon = 1E-3 gives nice results on CFP with FITC PSF
