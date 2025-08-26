@@ -32,17 +32,23 @@ def unify_psfs(fov,channel,mode):
     centered_tot_z = []
     centered_tot_r = []
     centered_tot_c = []
-    raws = {}
+    normalizeds = {}
 
     for path in Path("data/dev/psf_crop").glob(f"FOV-{fov}_{channel}*.tif"):
         p = int(path.stem.rpartition("-")[2])
         image = io.imread(str(path))
         
-        image = image / np.sum(image)
+        normalized = np.empty_like(image,dtype=float)
+        for z in range(image.shape[0]):
+            threshold = np.percentile(image[z],0.1)
+            normalized[z] = image[z] - threshold
+            # image[image<0] = 0
+            # image = image / np.max(image)
+        normalized[normalized < 0] = 0
+        normalized = normalized / np.max(normalized)
+        normalizeds[p] = normalized
 
-        raws[p] = image
-
-        centroid = get_center(image, mode)
+        centroid = get_center(normalized, mode)
         
         [
             [pad_center_z0,pad_center_z1],
@@ -94,20 +100,38 @@ def unify_psfs(fov,channel,mode):
             [pad_size_c0,pad_size_c1],
         ] = deconvolve_fft.calculate_pad2align([[dims_z,dims_r,dims_c],[max_z,max_r,max_c]])[0]
 
-        psfs[idx] = np.pad(
-            raws[idx],
+        psf = np.pad(
+            normalizeds[idx],
             (
                 (bbox_data.loc[idx,"centered_z0"]+pad_size_z0, bbox_data.loc[idx,"centered_z1"]+pad_size_z1),
                 (bbox_data.loc[idx,"centered_r0"]+pad_size_r0, bbox_data.loc[idx,"centered_r1"]+pad_size_r1),
                 (bbox_data.loc[idx,"centered_c0"]+pad_size_c0, bbox_data.loc[idx,"centered_c1"]+pad_size_c1),
             )
         )
+        for z in range(psf.shape[0]):
+            if np.any(psf[z]>0):
+                samples = []
+                samples.append(normalizeds[idx][:, 10,:].flatten())
+                samples.append(normalizeds[idx][:,-10,:].flatten())
+                samples.append(normalizeds[idx][:,:, 10].flatten())
+                samples.append(normalizeds[idx][:,:,-10].flatten())
+                sample = np.hstack(samples)
+            else:
+                if z < psf.shape[0]/2:
+                    sample = normalizeds[idx][ 0].flatten()
+                else:
+                    sample = normalizeds[idx][-1].flatten()                
+            mu    = np.mean(sample)
+            sigma = np.std(sample,ddof=1)
+            psf[z,psf[z]==0] = np.random.normal(mu,sigma,size=np.count_nonzero(psf[z]==0))
+        psf[psf < 0] = 0
+        psfs[idx] = psf/psf.max()
     return psfs
 
 # %% 
-for channel in ("DAPI","FITC","YFP","TRITC"):
+for channel in ("DAPI","FITC","TRITC","YFP"):
     for v in (1,2):
-        for mode in ["max", "centroid"]:
+        for mode in ["max"]:
             psfs = unify_psfs(v,channel,mode)
 
             count_psf = 0
