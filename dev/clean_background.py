@@ -85,10 +85,10 @@ for path in Path("data/dev/tiff").glob("FOV*.tiff"):
     print(f"<clean_bkgd.{method}>: cleaned image at `{path}`")
 
 # %% F**k them all, what about just median filter with a large window
-# Never mind, it is even slower.
 %%time
 # CPU times: total: 1h 53min 52s
 # Wall time: 1h 55min 13s
+# Never mind, it is even slower.
 
 method = "median"
 
@@ -118,10 +118,10 @@ for path in Path("data/dev/tiff").glob("FOV*.tiff"):
 
 
 # %% Following previous idea: 
+%%time
 # 1. segment the signals from background with filters.niblack
 # 2. gaussian smooth the background with a rather small sigma (more local)
 # 3. fill the missing backgound on the signal pixels with restoration.inpaint_biharmonic
-%%time
 
 method = "inpaint"
 
@@ -131,17 +131,19 @@ for f in folders:
         print(f"<clean_bkgd.{method}>: made new directory: `data/dev/{f}/{method}`")
 
 threshold = lambda arr: arr.mean() + arr.std() # * 1
-
 for path in Path("data/dev/tiff").glob("FOV*.tiff"):
     img = io.imread(str(path))
     
-    mask = np.empty_like(img,dtype=int)
+    mask = np.empty_like(img,dtype=bool)
     background = np.empty_like(img,dtype=int)
     for z in range(img.shape[0]):
-        smooth = filters.gaussian(img[z],sigma=0.75)
-        mask_core = filters.threshold_local(smooth, method='generic', param=threshold)
-        mask[z] = morphology.binary_dilation(mask_core,footprint=np.ones((5,5)))
-        background[z] = restoration.inpaint_biharmonic(smooth,mask)
+        smooth = filters.gaussian(img[z],sigma=0.75,preserve_range=True)
+        thresholds = filters.threshold_niblack(smooth,window_size=51,k=-1)
+        mask_z = (smooth > thresholds) # mask[z]
+        mask_z = morphology.binary_erosion(mask_z,footprint=np.ones((3,3)))
+        mask[z] = morphology.binary_dilation(mask_z,footprint=np.ones((7,7)))
+        background[z] = restoration.inpaint_biharmonic(smooth,mask[z])
+    clean = img - background
 
     io.imsave(
         f"data/dev/bkgd/{method}/mask_{path.stem}.tiff",
@@ -156,6 +158,7 @@ for path in Path("data/dev/tiff").glob("FOV*.tiff"):
         util.img_as_uint(clean)
     )
     print(f"<clean_bkgd.{method}>: cleaned image at `{path}`")
+
 
 
 # %%
