@@ -23,11 +23,14 @@ for f in folders:
 %%time
 # CPU times: total: 18min 8s
 # Wall time: 19min 6s
+
 method = "rolling_ball"
+
 for f in folders:
     if not Path(f"data/dev/{f}/{method}").is_dir():
         Path.mkdir(f"data/dev/{f}/{method}")
         print(f"<clean_bkgd.{method}>: made new directory: `data/dev/{f}/{method}`")
+
 for path in Path("data/dev/tiff").glob("FOV*.tiff"):
     img = io.imread(str(path))
 
@@ -53,11 +56,15 @@ for path in Path("data/dev/tiff").glob("FOV*.tiff"):
 %%time
 # CPU times: total: 20min 20s
 # Wall time: 21min 19s
+
+
 method = "top_hat"
+
 for f in folders:
     if not Path(f"data/dev/{f}/{method}").is_dir():
         Path.mkdir(f"data/dev/{f}/{method}")
         print(f"<clean_bkgd.{method}>: made new directory: `data/dev/{f}/{method}`")
+
 for path in Path("data/dev/tiff").glob("FOV*.tiff"):
     img = io.imread(str(path))
     
@@ -82,11 +89,14 @@ for path in Path("data/dev/tiff").glob("FOV*.tiff"):
 %%time
 # CPU times: total: 1h 53min 52s
 # Wall time: 1h 55min 13s
+
 method = "median"
+
 for f in folders:
     if not Path(f"data/dev/{f}/{method}").is_dir():
         Path.mkdir(f"data/dev/{f}/{method}")
         print(f"<clean_bkgd.{method}>: made new directory: `data/dev/{f}/{method}`")
+
 for path in Path("data/dev/tiff").glob("FOV*.tiff"):
     img = io.imread(str(path))
     
@@ -106,32 +116,46 @@ for path in Path("data/dev/tiff").glob("FOV*.tiff"):
     )
     print(f"<clean_bkgd.{method}>: cleaned image at `{path}`")
 
+
 # %% Following previous idea: 
 # 1. segment the signals from background with filters.niblack
 # 2. gaussian smooth the background with a rather small sigma (more local)
 # 3. fill the missing backgound on the signal pixels with restoration.inpaint_biharmonic
 %%time
+
 method = "inpaint"
+
 for f in folders:
     if not Path(f"data/dev/{f}/{method}").is_dir():
         Path.mkdir(f"data/dev/{f}/{method}")
         print(f"<clean_bkgd.{method}>: made new directory: `data/dev/{f}/{method}`")
+
+threshold = lambda arr: arr.mean() + arr.std() # * 1
+
 for path in Path("data/dev/tiff").glob("FOV*.tiff"):
     img = io.imread(str(path))
     
-    # background = np.empty_like(img,dtype=int)
-    # for z in range(img.shape[0]):
-    #     background[z] = filters.median(img[z],footprint)
-    # clean = img - background
+    mask = np.empty_like(img,dtype=int)
+    background = np.empty_like(img,dtype=int)
+    for z in range(img.shape[0]):
+        smooth = filters.gaussian(img[z],sigma=0.75)
+        mask_core = filters.threshold_local(smooth, method='generic', param=threshold)
+        mask[z] = morphology.binary_dilation(mask_core,footprint=np.ones((5,5)))
+        background[z] = restoration.inpaint_biharmonic(smooth,mask)
 
-    # io.imsave(
-    #     f"data/dev/bkgd/{method}/{path.stem}.tiff",
-    #     util.img_as_uint(background)
-    # )
-    # io.imsave(
-    #     f"data/dev/clean/{method}/{path.stem}.tiff",
-    #     util.img_as_uint(clean)
-    # )
+    io.imsave(
+        f"data/dev/bkgd/{method}/mask_{path.stem}.tiff",
+        util.img_as_ubyte(mask)
+    )
+    io.imsave(
+        f"data/dev/bkgd/{method}/{path.stem}.tiff",
+        util.img_as_uint(background)
+    )
+    io.imsave(
+        f"data/dev/clean/{method}/{path.stem}.tiff",
+        util.img_as_uint(clean)
+    )
     print(f"<clean_bkgd.{method}>: cleaned image at `{path}`")
+
 
 # %%
