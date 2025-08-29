@@ -86,33 +86,9 @@ for path in Path("data/dev/proj").glob("FOV*.tiff"):
 # %%
 for path in Path("data/dev/tiff").glob("FOV*FITC.tiff"):
     image = io.imread(str(path))
-    holes = np.copy(image).astype(float)
 
-    mask = np.zeros_like(image[0],dtype=bool)
-    coords = np.loadtxt(f"data/dev/pins/{path.stem}.txt")
-    for r,c in coords:
-        mask[int(r),int(c)] = True
-    mask = morphology.binary_dilation(mask,morphology.disk(40))
-    holes[:,mask] = np.nan
-
-    background = np.empty_like(image,dtype=float)
-    for z in range(image.shape[0]):
-        background[z] = ndi.generic_filter(
-            holes[z], np.nanmean, 
-            footprint=np.ones((100,100), dtype=int)
-        )
-    background = background.astype(int)
-
-    clean = image - background
-
-    io.imsave(
-        f"data/dev/bkgd/{path.name}",
-        util.img_as_uint(background)
-    )
-    io.imsave(
-        f"data/dev/clean/{path.name}",
-        util.img_as_uint(clean)
-    )
+    background = np.empty_like(image)
+    for z in range()
 
 
 # %%
