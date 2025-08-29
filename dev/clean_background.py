@@ -1,3 +1,4 @@
+# PREVIOUS: nd2tiff.py
 # %%
 import numpy as np
 import scipy.ndimage as ndi
@@ -11,84 +12,75 @@ from skimage import util,io,restoration,morphology,filters,feature
 #     if not Path(f"data/dev/{f}").is_dir():
 #         Path.mkdir(f"data/dev/{f}")
 
-# %%
-for path in Path("data/dev/tiff").glob("FOV*FITC.tiff"):
-    image = io.imread(str(path))
-    plt.figure()
-    for z in range(image.shape[0]):
-        max = image[z].max()
-        plt.hist(
-            image[z].flatten(),
-            np.array(range(0,max+2,1))-0.5,
-            label=f"{z}",histtype='step'
-        )
-    plt.title(f"{path.stem}")
-    # plt.legend()
-    plt.show()
-    
+# %% background subtraction: gaussian of sigma=25
+%%time
+# 2 images of (47,2044,2048), sigma=25:
+# CPU times: total: 1min 26s
+# Wall time: 1min 40s
 
-# %%
-for path in Path("data/dev/tiff").glob("FOV*FITC.tiff"):
-    image = io.imread(str(path))
-    plt.figure()
-    for z in range(10,image.shape[0]-10):
-        min = image[z].min()
-        data = image[z] - min
-        max = data.max()
-        plt.hist(
-            data.flatten(),
-            np.array(range(0,502,1))-0.5,
-            label=f"{z}",histtype='step'
-        )
-    plt.title(f"{path.stem}")
-    # plt.legend()
-    plt.show()
+# 12 images of (47,2044,2048), sigma=25:
+# CPU times: total: 8min
+# Wall time: 9min 13s
 
-# %%
 for path in Path("data/dev/tiff").glob("FOV*.tiff"):
     image = io.imread(str(path))
-    subtracted = np.empty_like(image)
-    for z in range(10,image.shape[0]-10):
-        min = image[z].min()
-        subtracted[z] = image[z] - min
-    proj = np.max(subtracted,axis=0)
+
+    background = np.empty_like(image,dtype=int)
+    for z in range(image.shape[0]):
+        background[z] = filters.gaussian(image[z],sigma=25,preserve_range=True).astype(int)
+    
+    clean = image - background
+    abslu = np.copy(clean)
+    abslu[ abslu < 0 ] =  - abslu[ abslu < 0 ]
+
     io.imsave(
-        f"data/dev/proj/{path.name}",
-        util.img_as_uint(proj)
+        f"data/dev/bkgd/{path.name}",
+        util.img_as_uint(background)
     )
-# %%
-thresh_rels = {
-    "CFP":   2/3,
-    "DAPI":  2/3,
-    "FITC":  1/5,
-    "YFP":   2/5,
-    "TRITC": 1/5,
-}
-for path in Path("data/dev/proj").glob("FOV*.tiff"):
-    camera = path.stem.rpartition("_")[2]
-    proj = io.imread(str(path))
-
-    coords = feature.peak_local_max(proj,min_distance=10,threshold_rel=thresh_rels[camera])
-    np.savetxt(
-        f"data/dev/pins/{path.stem}.txt",
-        coords, fmt='%d'
-    )
-
-    pins = np.zeros_like(proj,dtype=bool)
-    for r,c in coords:
-        pins[r,c] = True
-    pins = morphology.binary_dilation(pins,morphology.disk(5))
     io.imsave(
-        f"data/dev/pins/{path.name}",
-        util.img_as_ubyte(pins)
+        f"data/dev/clean/{path.name}",
+        util.img_as_uint(clean)
+    )
+    io.imsave(
+        f"data/dev/clean/abs_{path.name}",
+        util.img_as_uint(abslu)
     )
 
+# %% [markdown]
+# % % time
+# 2 images of (47,2044,2048), size0=25, size1=30:
+# CPU times: total: 34.5 s
+# Wall time: 44.5 s
+# This method will generate a square bright ring around each bright center
+
+# ```python
+# for path in Path("data/dev/tiff").glob("FOV*FITC.tiff"):
+#     image = io.imread(str(path))
+
+#     average0 = np.empty_like(image,dtype=float)
+#     average1 = np.empty_like(image,dtype=float)
+#     for z in range(image.shape[0]):
+#         average0[z] = ndi.uniform_filter(image[z],size=25)
+#         average1[z] = ndi.uniform_filter(image[z],size=30)
+#     background = ((average1 * 900 - average0 * 625) / (900 - 625)).astype(int)
+
+#     clean = image - background
+    
+#     abslu = np.copy(clean)
+#     abslu[abslu<0] = - abslu[abslu<0]
+
+#     io.imsave(
+#         f"data/dev/bkgd/diffmean/{path.name}",
+#         util.img_as_uint(background)
+#     )
+#     io.imsave(
+#         f"data/dev/clean/diffmean/{path.name}",
+#         util.img_as_uint(clean)
+#     )
+#     io.imsave(
+#         f"data/dev/clean/diffmean/abs_{path.name}",
+#         util.img_as_uint(abslu)
+#     )
+# ```
 # %%
-for path in Path("data/dev/tiff").glob("FOV*FITC.tiff"):
-    image = io.imread(str(path))
-
-    background = np.empty_like(image)
-    for z in range()
-
-
-# %%
+# NEXT: ./locate_psf.py

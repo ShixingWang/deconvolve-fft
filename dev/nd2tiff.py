@@ -12,3 +12,5 @@ for path in Path("data/dev/raw/2025-05-13_microspheresOnPetriDish").glob("*.nd2"
         f"data/dev/tiff/{path.stem}.tiff",
         util.img_as_uint(raw)
     )
+
+# NEXT: ./clean_background.py
