@@ -82,3 +82,4 @@ for path in Path("data/dev/proj").glob("FOV*.tiff"):
         util.img_as_ubyte(pins)
     )
 # %%
+# NEXT: ./combine_psf.py

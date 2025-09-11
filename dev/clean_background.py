@@ -7,10 +7,10 @@ from pathlib import Path
 from sklearn import neighbors
 from skimage import util,io,restoration,morphology,filters,feature
 
-# folders = ["bkgd","clean"]
-# for f in folders:
-#     if not Path(f"data/dev/{f}").is_dir():
-#         Path.mkdir(f"data/dev/{f}")
+folders = ["bkgd","clean"]
+for f in folders:
+    if not Path(f"data/dev/{f}").is_dir():
+        Path.mkdir(f"data/dev/{f}")
 
 # %% background subtraction: gaussian of sigma=25
 %%time
@@ -21,6 +21,10 @@ from skimage import util,io,restoration,morphology,filters,feature
 # 12 images of (47,2044,2048), sigma=25:
 # CPU times: total: 8min
 # Wall time: 9min 13s
+
+# interesting, on my laptop:
+# CPU times: user 16min 3s, sys: 1min 6s, total: 17min 10s
+# Wall time: 17min 18s
 
 for path in Path("data/dev/tiff").glob("FOV*.tiff"):
     image = io.imread(str(path))
