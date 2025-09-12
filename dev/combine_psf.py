@@ -4,15 +4,15 @@ import deconvolve_fft
 import numpy as np
 import pandas as pd
 from pathlib import Path
-from skimage import io,util,measure
+from skimage import io,util,filters
 
 # %%
 def unify_psfs(fov,channel):
     half_window = {
         "DAPI":  10,
-        "FITC":  32,
+        "FITC":  60,
         "YFP":   10,
-        "TRITC": 32,
+        "TRITC": 60,
     }
 
     clean = io.imread(f"data/dev/clean/FOV-{fov}_{channel}.tiff")
@@ -97,3 +97,14 @@ for channel in (
         )
 
 # %%
+for path in Path("data/psf/").glob("psf-median*.tiff"):
+    psf = io.imread(str(path))
+    filtered = filters.median(psf,footprint=np.ones((3,3,3)))
+    io.imsave(
+        f"data/psf/filtered-{path.name}",
+        util.img_as_float(
+            filtered / filtered.max()
+        )
+    )
+# %%
+# NEXT: 
