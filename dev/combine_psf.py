@@ -107,4 +107,4 @@ for path in Path("data/psf/").glob("psf-median*.tiff"):
         )
     )
 # %%
-# NEXT: 
+# NEXT: validate_beads.py
